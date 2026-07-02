@@ -1,0 +1,13 @@
+node_modules/
+**/node_modules/
+.output/
+**/.output/
+.tanstack/
+**/.tanstack/
+dist/
+**/dist/
+.wrangler/
+**/.wrangler/
+.env
+**/.env
+.env.local

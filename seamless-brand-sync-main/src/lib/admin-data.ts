@@ -1,0 +1,16 @@
+export const salesByDay = [
+  { d: "Mon", orders: 12 },
+  { d: "Tue", orders: 19 },
+  { d: "Wed", orders: 3 },
+  { d: "Thu", orders: 5 },
+  { d: "Fri", orders: 2 },
+  { d: "Sat", orders: 3 },
+  { d: "Sun", orders: 9 },
+  { d: "W1", orders: 15 },
+  { d: "W2", orders: 22 },
+  { d: "W3", orders: 18 },
+  { d: "W4", orders: 25 },
+  { d: "W5", orders: 30 },
+  { d: "W6", orders: 28 },
+  { d: "W7", orders: 35 },
+];
