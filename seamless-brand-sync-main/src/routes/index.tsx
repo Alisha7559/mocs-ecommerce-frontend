@@ -121,7 +121,7 @@ function TrendingProducts({ products }: { products: any[] }) {
           </div>
 
           {products.length > 4 && (
-            <div className="flex gap-2 shrink-0">
+            <div className="hidden lg:flex gap-2 shrink-0">
               <button
                 type="button"
                 onClick={scrollPrev}
@@ -147,7 +147,7 @@ function TrendingProducts({ products }: { products: any[] }) {
         <div className="overflow-hidden cursor-grab active:cursor-grabbing px-2 py-4" ref={emblaRef}>
           <div className="flex gap-6">
             {products.map((product, i) => (
-              <div key={product.id} className="min-w-0 flex-[0_0_100%] sm:flex-[0_0_46%] lg:flex-[0_0_23.5%]">
+              <div key={product.id} className="min-w-0 flex-[0_0_80%] sm:flex-[0_0_46%] lg:flex-[0_0_23.5%]">
                 <ProductCard product={product} index={i} variant="simple" />
               </div>
             ))}
@@ -501,6 +501,9 @@ function Home() {
   }, []);
 
   const cardsPerViewBanner = windowWidth >= 1024 ? 3 : windowWidth >= 768 ? 2 : 1;
+  const isMobileMarquee = windowWidth < 768;
+  const marqueeX = isMobileMarquee ? -1096 : -1376;
+  const marqueeDuration = isMobileMarquee ? 12 : 25;
 
   return (
     <>
@@ -533,7 +536,7 @@ function Home() {
                     type="button"
                     onClick={() => setNewArrivalIdx((prev) => Math.max(0, prev - 1))}
                     disabled={newArrivalIdx === 0}
-                    className="absolute -left-5 top-1/2 -translate-y-1/2 z-30 flex h-11 w-11 items-center justify-center rounded-full border border-stone-200 bg-white text-stone-850 hover:bg-stone-50 transition shadow-md disabled:opacity-30 disabled:pointer-events-none cursor-pointer hover:scale-105"
+                    className="absolute -left-5 top-1/2 -translate-y-1/2 z-30 hidden lg:flex h-11 w-11 items-center justify-center rounded-full border border-stone-200 bg-white text-stone-850 hover:bg-stone-50 transition shadow-md disabled:opacity-30 disabled:pointer-events-none cursor-pointer hover:scale-105"
                   >
                     <ChevronLeft className="h-5 w-5" />
                   </button>
@@ -541,7 +544,7 @@ function Home() {
                     type="button"
                     onClick={() => setNewArrivalIdx((prev) => Math.min(newArrivals.length - cardsPerViewBanner, prev + 1))}
                     disabled={newArrivalIdx >= newArrivals.length - cardsPerViewBanner}
-                    className="absolute -right-5 top-1/2 -translate-y-1/2 z-30 flex h-11 w-11 items-center justify-center rounded-full border border-stone-200 bg-white text-stone-850 hover:bg-stone-50 transition shadow-md disabled:opacity-30 disabled:pointer-events-none cursor-pointer hover:scale-105"
+                    className="absolute -right-5 top-1/2 -translate-y-1/2 z-30 hidden lg:flex h-11 w-11 items-center justify-center rounded-full border border-stone-200 bg-white text-stone-850 hover:bg-stone-50 transition shadow-md disabled:opacity-30 disabled:pointer-events-none cursor-pointer hover:scale-105"
                   >
                     <ChevronRight className="h-5 w-5" />
                   </button>
@@ -549,13 +552,13 @@ function Home() {
               )}
 
               {/* Slider Viewport (prevents clipping the navigation arrows) */}
-              <div className="overflow-hidden w-full px-1">
+              <div className="overflow-x-auto lg:overflow-hidden w-full px-1 no-scrollbar scroll-smooth snap-x snap-mandatory">
                 {/* Slider Wrapper */}
                 <div 
                   className="flex gap-6 transition-transform duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]"
-                  style={{
+                  style={windowWidth >= 1024 ? {
                     transform: `translateX(calc(-${newArrivalIdx} * (100% / ${cardsPerViewBanner}) - ${newArrivalIdx * 24 / cardsPerViewBanner}px))`
-                  }}
+                  } : undefined}
                 >
                   {newArrivals.map((product) => (
                     <Link
@@ -563,12 +566,12 @@ function Home() {
                       to="/product/$id"
                       params={{ id: product.id }}
                       className={cn(
-                        "shrink-0 bg-black/10 hover:bg-black/20 rounded-3xl p-4 flex flex-col justify-between hover:scale-[1.03] transition-all duration-300 relative group h-[320px] sm:h-[350px] lg:h-[280px]",
+                        "shrink-0 bg-black/10 hover:bg-black/20 rounded-3xl p-4 flex flex-col justify-between hover:scale-[1.03] transition-all duration-300 relative group h-[320px] sm:h-[350px] lg:h-[280px] snap-center",
                         cardsPerViewBanner === 3
                           ? "w-[calc(33.33%-16px)]"
                           : cardsPerViewBanner === 2
-                            ? "w-[calc(50%-12px)]"
-                            : "w-full"
+                            ? "w-[calc(70%-12px)] sm:w-[calc(50%-12px)]"
+                            : "w-[85%] sm:w-[calc(50%-12px)]"
                       )}
                     >
                       {/* Shoe Image */}
@@ -749,7 +752,7 @@ function Home() {
             type="button"
             onClick={scrollPrev}
             aria-label="Previous products"
-            className="absolute -left-6 top-1/2 -translate-y-1/2 z-20 flex h-11 w-11 items-center justify-center rounded-full border border-border/80 bg-background/95 hover:bg-background text-foreground hover:border-primary hover:text-primary transition shadow-card cursor-pointer shrink-0 hover:scale-105"
+            className="absolute -left-6 top-1/2 -translate-y-1/2 z-20 hidden lg:flex h-11 w-11 items-center justify-center rounded-full border border-border/80 bg-background/95 hover:bg-background text-foreground hover:border-primary hover:text-primary transition shadow-card cursor-pointer shrink-0 hover:scale-105"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
@@ -757,7 +760,7 @@ function Home() {
             type="button"
             onClick={scrollNext}
             aria-label="Next products"
-            className="absolute -right-6 top-1/2 -translate-y-1/2 z-20 flex h-11 w-11 items-center justify-center rounded-full border border-border/80 bg-background/95 hover:bg-background text-foreground hover:border-primary hover:text-primary transition shadow-card cursor-pointer shrink-0 hover:scale-105"
+            className="absolute -right-6 top-1/2 -translate-y-1/2 z-20 hidden lg:flex h-11 w-11 items-center justify-center rounded-full border border-border/80 bg-background/95 hover:bg-background text-foreground hover:border-primary hover:text-primary transition shadow-card cursor-pointer shrink-0 hover:scale-105"
           >
             <ChevronRight className="h-5 w-5" />
           </button>
@@ -765,7 +768,7 @@ function Home() {
           <div className="overflow-hidden cursor-grab active:cursor-grabbing px-2 py-4" ref={emblaRef}>
             <div className="flex gap-6">
               {processedProducts.map((p, i) => (
-                <div key={p.id} className="min-w-0 flex-[0_0_100%] sm:flex-[0_0_46%] lg:flex-[0_0_23.5%]">
+                <div key={p.id} className="min-w-0 flex-[0_0_46%] sm:flex-[0_0_46%] lg:flex-[0_0_23.5%]">
                   <ProductCard product={p} index={i} />
                 </div>
               ))}
@@ -800,18 +803,18 @@ function Home() {
           <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-background via-background/60 to-transparent z-10 pointer-events-none" />
 
           <motion.div
-            animate={{ x: [0, -1100] }}
+            animate={{ x: [0, marqueeX] }}
             transition={{
               repeat: Infinity,
               ease: "linear",
-              duration: 25,
+              duration: marqueeDuration,
             }}
             className="flex gap-6 whitespace-nowrap flex-nowrap"
           >
             {[...reviews, ...reviews, ...reviews].map((r, i) => (
               <div
                 key={i}
-                className="inline-block min-w-[320px] max-w-[320px] whitespace-normal rounded-3xl border border-border bg-card p-6 shadow-soft transition hover:border-primary/20"
+                className="inline-block min-w-[250px] max-w-[250px] sm:min-w-[280px] sm:max-w-[280px] lg:min-w-[320px] lg:max-w-[320px] whitespace-normal rounded-2xl lg:rounded-3xl border border-border bg-card p-4 lg:p-6 shadow-soft transition hover:border-primary/20"
               >
                 <div className="flex gap-0.5">
                   {Array.from({ length: r.rating }).map((_, idx) => (

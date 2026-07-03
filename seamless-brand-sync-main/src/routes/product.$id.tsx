@@ -220,7 +220,6 @@ function ProductDetail() {
   const [qty, setQty] = useState(1);
   const [zoom, setZoom] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
-  const [reviewColorFilter, setReviewColorFilter] = useState<string | null>(null);
 
   // Responsive window resize state for slides per page in carousels
   const [windowWidth, setWindowWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1024);
@@ -277,7 +276,6 @@ function ProductDetail() {
     setQty(1);
     setActive(0);
     setZoom(false);
-    setReviewColorFilter(null);
     setCurrentReviewIndex(0);
 
     const fetchReviews = async () => {
@@ -303,12 +301,12 @@ function ProductDetail() {
   }, [product.id]);
 
   const reviews = [
-    ...userReviews.filter((r) => !reviewColorFilter || r.color === reviewColorFilter),
+    ...userReviews,
   ];
 
   useEffect(() => {
     setCurrentReviewIndex(0);
-  }, [reviewColorFilter, reviews.length]);
+  }, [reviews.length]);
 
   const nextReview = () => {
     if (reviews.length <= 1) return;
@@ -581,42 +579,10 @@ function ProductDetail() {
             <span className="text-muted-foreground">/ 5</span>
           </div>
         </Reveal>
-        <div className="mb-6 flex flex-wrap items-center gap-2">
-          <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-            Filter by colour:
-          </span>
-          <button
-            type="button"
-            onClick={() => setReviewColorFilter(null)}
-            className={cn(
-              "rounded-full border px-3 py-1 text-xs font-semibold transition cursor-pointer",
-              !reviewColorFilter
-                ? "border-primary bg-primary text-primary-foreground"
-                : "border-border hover:border-primary",
-            )}
-          >
-            All
-          </button>
-          {product.colors.map((c) => (
-            <button
-              key={c.name}
-              type="button"
-              onClick={() => setReviewColorFilter(c.name)}
-              className={cn(
-                "flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition cursor-pointer",
-                reviewColorFilter === c.name
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border hover:border-primary",
-              )}
-            >
-              <span className="h-3 w-3 rounded-full border" style={{ backgroundColor: c.hex }} />
-              {c.name}
-            </button>
-          ))}
-        </div>
+
         {reviews.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-sm text-muted-foreground">No reviews for this colour yet.</p>
+            <p className="text-sm text-muted-foreground">No reviews yet.</p>
           </div>
         ) : (
           <div className="relative flex items-center justify-between gap-4 max-w-lg mx-auto py-4">
@@ -775,21 +741,7 @@ function ProductDetail() {
         </section>
       )}
 
-      <div className="fixed inset-x-0 bottom-14 z-40 border-t border-border bg-background/95 p-3 backdrop-blur lg:hidden">
-        <div className="flex items-center gap-3">
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-bold">{product.name}</p>
-            <p className="text-sm font-semibold text-primary">₹{product.price}</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => handleAdd(true)}
-            className="rounded-full bg-primary px-6 py-3 text-sm font-bold text-primary-foreground"
-          >
-            Add to Cart
-          </button>
-        </div>
-      </div>
+
     </div>
   );
 }

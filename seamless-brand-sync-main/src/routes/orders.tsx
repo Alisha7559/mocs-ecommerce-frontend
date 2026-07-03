@@ -310,7 +310,7 @@ function OrdersPage() {
                         <tr key={order._id} className="hover:bg-stone-50/20 transition-colors">
                           {/* Order ID */}
                           <td className="whitespace-nowrap px-6 py-4.5 font-bold text-primary text-sm">
-                            Order #{displayId}
+                            Order {displayId}
                           </td>
 
                           {/* Items Column: cover thumbnail and details */}
@@ -322,6 +322,9 @@ function OrdersPage() {
                                     src={getImageUrl(firstItem.image)}
                                     alt={firstItem.name}
                                     className="h-full w-full object-cover"
+                                    onError={(e) => {
+                                      e.currentTarget.src = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=120";
+                                    }}
                                   />
                                 </div>
                                 <div className="min-w-0">
@@ -409,7 +412,7 @@ function OrdersPage() {
 
       {/* Order Details Modal Overlay */}
       {detailModalOpen && selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-start lg:items-center justify-center bg-black/50 p-4 overflow-y-auto">
           <div className="w-full max-w-2xl rounded-3xl border border-stone-200 bg-white p-6 shadow-xl animate-in fade-in zoom-in-95 duration-200 my-8 text-stone-900">
             <div className="mb-6 flex items-center justify-between border-b border-stone-100 pb-4">
               <div className="text-left">
@@ -438,6 +441,9 @@ function OrdersPage() {
                         src={getImageUrl(item.image)}
                         alt={item.name}
                         className="h-11 w-11 rounded-xl object-cover bg-white border border-stone-150 shrink-0"
+                        onError={(e) => {
+                          e.currentTarget.src = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=120";
+                        }}
                       />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-bold text-stone-900">{item.name}</p>

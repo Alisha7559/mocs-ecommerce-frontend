@@ -190,14 +190,14 @@ function AdminDashboard() {
       </div>
 
       {/* 2. Overview Indicators Grid */}
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {overviewCards.map((card) => {
           const Icon = card.icon;
           return (
             <Link
               key={card.label}
               to={card.to as any}
-              className="block rounded-3xl border border-stone-200 bg-white p-6 shadow-soft hover:shadow-card hover:-translate-y-1 transition duration-300 relative group overflow-hidden cursor-pointer"
+              className="block rounded-3xl border border-stone-200 bg-white p-3 lg:p-6 shadow-soft hover:shadow-card hover:-translate-y-1 transition duration-300 relative group overflow-hidden cursor-pointer"
             >
               {/* Backglow element */}
               <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-stone-100 opacity-20 group-hover:scale-125 transition duration-500" />
@@ -205,12 +205,12 @@ function AdminDashboard() {
               <div className="flex items-start justify-between text-left">
                 <div className="space-y-1">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-stone-500">{card.label}</span>
-                  <p className="font-display text-3xl font-black tracking-tight text-black mt-1">{card.value}</p>
+                  <p className="font-display text-xl lg:text-3xl font-black tracking-tight text-black mt-1">{card.value}</p>
                 </div>
               </div>
-              <div className="mt-8 flex items-center justify-between border-t border-stone-100 pt-4">
-                <span className="text-[10px] font-semibold text-stone-400">{card.description}</span>
-                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border ${card.statusColor}`}>
+              <div className="mt-2.5 lg:mt-8 flex items-center justify-between border-t border-stone-100 pt-2">
+                <span className="hidden sm:inline text-[10px] font-semibold text-stone-400 truncate max-w-full">{card.description}</span>
+                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[8px] lg:text-[9px] font-black uppercase tracking-wider border ${card.statusColor}`}>
                   <span className="h-1 w-1 rounded-full bg-current animate-pulse" />
                   {card.status}
                 </span>
@@ -438,6 +438,9 @@ function AdminDashboard() {
                           src={getImageUrl(item.product?.coverImage || item.image)}
                           alt={item.name}
                           className="h-8 w-8 rounded-lg object-cover bg-muted border border-border"
+                          onError={(e) => {
+                            e.currentTarget.src = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=120";
+                          }}
                         />
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-xs font-semibold text-foreground">{item.name}</p>

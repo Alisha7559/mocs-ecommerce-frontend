@@ -13,6 +13,7 @@ type Slide = {
   subtitle: string;
   cta: string;
   to: "/shop" | "/about" | "/contact";
+  mobileFocus?: "center" | "left" | "right";
 };
 
 const defaultSlides: Slide[] = [];
@@ -72,7 +73,8 @@ export function Hero() {
       const rest = words.slice(0, words.length - 1).join(" ");
       return (
         <span key={index} className="block">
-          {rest} {rest ? " " : ""}<span className="text-primary">{lastWord}</span>
+          {rest && <span className="block">{rest}</span>}
+          <span className="block text-primary">{lastWord}</span>
         </span>
       );
     });
@@ -80,7 +82,7 @@ export function Hero() {
 
   if (heroSlides.length === 0) {
     return (
-      <section className="relative h-[70vh] min-h-[500px] w-full overflow-hidden bg-stone-950 text-white border-b border-stone-900 flex items-center justify-center">
+      <section className="relative h-[50vh] min-h-[500px] w-full overflow-hidden bg-stone-950 text-white border-b border-stone-900 flex items-center justify-center">
         <div className="text-stone-500 text-sm font-medium animate-pulse uppercase tracking-widest">Loading...</div>
       </section>
     );
@@ -89,7 +91,7 @@ export function Hero() {
   const current = heroSlides[active];
 
   return (
-    <section className="relative h-[35vh] min-h-[250px] sm:h-[40vh] sm:min-h-[280px] lg:h-[45vh] lg:min-h-[320px] w-full overflow-hidden bg-stone-950 text-white border-b border-stone-900">
+    <section className="relative h-[65vh] sm:h-[70vh] lg:h-[80vh] min-h-[450px] w-full overflow-hidden bg-stone-950 text-white border-b border-stone-900">
       
       {/* 1. Image Container: full absolute background, centered on footwear */}
       <div className="absolute inset-0 z-0 overflow-hidden">
@@ -102,19 +104,27 @@ export function Hero() {
             animate={{ x: 0 }}
             exit={{ x: "-100%" }}
             transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
-            className="w-full h-full object-cover object-center select-none pointer-events-none"
+            className={cn(
+              "absolute inset-0 w-full h-full object-cover select-none pointer-events-none",
+              current.mobileFocus === "right"
+                ? "object-right lg:object-center"
+                : current.mobileFocus === "left"
+                ? "object-left lg:object-center"
+                : "object-center"
+            )}
             style={{ 
               willChange: "transform",
               backfaceVisibility: "hidden"
             }}
           />
         </AnimatePresence>
-        {/* Responsive overlay: Solid dark tint on mobile/tablet, side gradient on desktop */}
-        <div className="absolute inset-0 bg-black/50 lg:bg-gradient-to-r lg:from-black/80 lg:via-black/50 lg:to-transparent z-10 pointer-events-none" />
+        
+        {/* Subtle dark shade overlay: bottom gradient on mobile, left gradient on desktop for text legibility */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent lg:bg-gradient-to-r lg:from-black/70 lg:via-black/20 lg:to-transparent z-10 pointer-events-none" />
       </div>
 
-      {/* 2. Content Container: overlays the image, centered vertically */}
-      <div className="absolute inset-0 z-20 px-6 sm:px-12 md:pl-20 lg:pl-32 xl:pl-56 flex flex-col justify-center">
+      {/* 2. Content Container: overlays the image on all screens, positioned downwards on mobile */}
+      <div className="absolute inset-0 z-20 px-6 sm:px-12 md:pl-20 lg:pl-32 xl:pl-56 flex flex-col justify-end pb-12 sm:pb-16 lg:justify-center lg:pb-0 bg-transparent drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)]">
         <div className="max-w-xl text-left">
           <AnimatePresence mode="wait" custom={direction}>
             <div key={active}>
@@ -124,10 +134,10 @@ export function Hero() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                className="text-sm sm:text-base md:text-lg font-extrabold uppercase text-primary tracking-[0.25em]"
+  className="text-2xl sm:text-2xl md:text-2xl lg:text-3xl font-extrabold uppercase text-primary tracking-[0.25em]"
                 style={{ 
-                  textShadow: "0 2px 4px rgba(0,0,0,0.3)",
-                  fontFamily: "'Times New Roman', Times, serif"
+                  fontFamily: "'Times New Roman', Times, serif",
+                  textShadow: "0 2px 4px rgba(218, 27, 27, 0.5)"
                 }}
               >
                 {current.eyebrow}
@@ -140,17 +150,16 @@ export function Hero() {
                   animate={{ y: 0, opacity: 1 }}
                   exit={{ y: "-100%", opacity: 0 }}
                   transition={{ duration: 0.85, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-                  className="mt-1.5 font-bold leading-[1.1] text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl tracking-wide uppercase"
-                  style={{ 
-                    textShadow: "0 4px 15px rgba(0,0,0,0.5)",
-                    fontFamily: "'Times New Roman', Times, serif"
+className="mt-1.5 font-black leading-[1.1] text-white text-4xl sm:text-5xl md:text-5xl lg:text-6xl xl:text-6xl tracking-wide uppercase"                  style={{ 
+                    fontFamily: "'Times New Roman', Times, serif",
+                    textShadow: "0 2px 8px rgba(0,0,0,0.6)"
                   }}
                 >
                   {renderTitle(current.title)}
                 </motion.h1>
               </div>
 
-              {/* Elegant decorative horizontal accent line (thick centered pill style) */}
+              {/* Elegant decorative horizontal accent line */}
               <motion.div
                 initial={{ scaleX: 0, opacity: 0 }}
                 animate={{ scaleX: 1, opacity: 1 }}
@@ -165,14 +174,30 @@ export function Hero() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.7, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                className="max-w-xl text-sm sm:text-base md:text-lg leading-relaxed text-stone-200 italic tracking-wide"
+                className="hidden lg:block max-w-xl text-sm sm:text-base md:text-lg leading-relaxed text-stone-200 italic tracking-wide"
                 style={{ 
-                  textShadow: "0 2px 8px rgba(0,0,0,0.4)",
-                  fontFamily: "'Times New Roman', Times, serif"
+                  fontFamily: "'Times New Roman', Times, serif",
+                  textShadow: "0 2px 6px rgba(192, 147, 147, 0.5)"
                 }}
               >
                 {current.subtitle}
               </motion.p>
+
+              {/* 4. CTA Button (Desktop only) */}
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                transition={{ duration: 0.7, delay: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                className="hidden lg:block pt-3"
+              >
+                <Link
+                  to={current.to as any}
+                  className="group inline-flex items-center gap-2 rounded-full bg-primary px-8 py-3.5 text-xs font-bold uppercase tracking-wide text-white transition-all hover:-translate-y-0.5 hover:brightness-110 shadow-md hover:shadow-orange-500/20"
+                >
+                  {current.cta || "Shop Now"} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </Link>
+              </motion.div>
             </div>
           </AnimatePresence>
         </div>
@@ -183,7 +208,7 @@ export function Hero() {
         type="button"
         aria-label="Previous slide"
         onClick={() => go((active - 1 + heroSlides.length) % heroSlides.length)}
-        className="absolute left-5 top-1/2 z-30 hidden -translate-y-1/2 grid-cols-1 place-items-center rounded-full bg-[#1C1917]/70 border border-stone-800 p-3.5 text-stone-300 shadow-sm transition hover:bg-primary hover:text-white sm:grid cursor-pointer"
+        className="absolute left-5 top-1/2 z-30 -translate-y-1/2 grid grid-cols-1 place-items-center rounded-full bg-[#1C1917]/70 border border-stone-800 p-3.5 text-stone-300 shadow-sm transition hover:bg-primary hover:text-white cursor-pointer animate-fade-in"
       >
         <ChevronLeft className="h-5 w-5" />
       </button>
@@ -191,7 +216,7 @@ export function Hero() {
         type="button"
         aria-label="Next slide"
         onClick={() => go((active + 1) % heroSlides.length)}
-        className="absolute right-5 top-1/2 z-30 hidden -translate-y-1/2 grid-cols-1 place-items-center rounded-full bg-[#1C1917]/70 border border-stone-800 p-3.5 text-stone-300 shadow-sm transition hover:bg-primary hover:text-white sm:grid cursor-pointer"
+        className="absolute right-5 top-1/2 z-30 -translate-y-1/2 grid grid-cols-1 place-items-center rounded-full bg-[#1C1917]/70 border border-stone-800 p-3.5 text-stone-300 shadow-sm transition hover:bg-primary hover:text-white cursor-pointer animate-fade-in"
       >
         <ChevronRight className="h-5 w-5" />
       </button>

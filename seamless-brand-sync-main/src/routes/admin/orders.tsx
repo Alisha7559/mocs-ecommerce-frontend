@@ -302,12 +302,12 @@ function AdminOrders() {
 
       {/* Order Details Modal Overlay */}
       {detailModalOpen && selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-secondary/60 p-4 backdrop-blur-sm overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-start lg:items-center justify-center bg-secondary/60 p-4 backdrop-blur-sm overflow-y-auto">
           <div className="w-full max-w-3xl rounded-3xl border border-border bg-card p-6 shadow-card animate-in fade-in zoom-in-95 duration-200 my-8">
             <div className="mb-6 flex items-center justify-between border-b border-border pb-4">
               <div>
                 <h3 className="font-display text-xl font-bold">
-                  Order Details: #{selectedOrder.razorpayOrderId ? selectedOrder.razorpayOrderId.slice(-8).toUpperCase() : selectedOrder._id.slice(-8).toUpperCase()}
+                  Order Details: {selectedOrder.razorpayOrderId ? selectedOrder.razorpayOrderId.slice(-8).toUpperCase() : selectedOrder._id.slice(-8).toUpperCase()}
                 </h3>
                 <p className="text-xs text-muted-foreground">Placed on {new Date(selectedOrder.createdAt).toLocaleString()}</p>
               </div>
@@ -327,6 +327,9 @@ function AdminOrders() {
                         src={getImageUrl(item.image)}
                         alt={item.name}
                         className="h-12 w-12 rounded-xl object-cover bg-muted border border-border"
+                        onError={(e) => {
+                          e.currentTarget.src = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=120";
+                        }}
                       />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-bold text-foreground">{item.name}</p>

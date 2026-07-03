@@ -646,7 +646,7 @@ function AdminProducts() {
             <table className="w-full text-left text-sm">
               <thead className="bg-muted text-muted-foreground text-xs font-bold uppercase border-b border-border">
                 <tr>
-                  <th className="p-4 sticky left-0 bg-card z-10 min-w-[240px]">Product Details</th>
+                  <th className="p-4 min-w-[240px]">Product Details</th>
                   <th className="p-4">Category</th>
                   <th className="p-4">Price</th>
                   <th className="p-4">Stock</th>
@@ -657,7 +657,7 @@ function AdminProducts() {
               <tbody className="divide-y divide-border">
                 {products.map((p) => (
                   <tr key={p._id} className={p.isDeleted ? "opacity-60 bg-muted/10" : "hover:bg-muted/10 transition"}>
-                    <td className="p-4 sticky left-0 bg-card z-10 border-r border-border/50 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
+                    <td className="p-4">
                       <div className="flex items-center gap-3">
                         <img
                           src={p.coverImage.startsWith("/") ? `${API_BASE_URL}${p.coverImage}` : p.coverImage}

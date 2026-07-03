@@ -138,7 +138,7 @@ export function ProductCard({
       <Link
         to="/product/$id"
         params={{ id: product.id }}
-        className="block overflow-hidden rounded-2xl bg-white border border-orange-500/12 shadow-soft transition-all duration-350 group-hover:-translate-y-2 group-hover:border-primary group-hover:shadow-[0_12px_40px_rgba(244,106,30,0.15)] text-stone-900"
+        className="block overflow-hidden rounded-2xl bg-white border border-orange-500 lg:border-orange-500/12 shadow-[0_0_15px_rgba(244,106,30,0.18)] lg:shadow-soft transition-all duration-350 group-hover:-translate-y-2 group-hover:border-primary group-hover:shadow-[0_12px_40px_rgba(244,106,30,0.15)] text-stone-900"
       >
         <div
           className="relative aspect-[1.1] overflow-hidden bg-white"

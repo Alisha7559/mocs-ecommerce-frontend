@@ -170,7 +170,7 @@ function AdminLayout() {
   return (
     <div className="min-h-screen bg-muted/30 flex flex-col lg:flex-row admin-layout">
       {/* Mobile Top Header */}
-      <header className="flex lg:hidden items-center justify-between border-b border-border bg-card px-6 py-4 shrink-0 shadow-sm">
+      <header className="sticky top-0 z-50 flex lg:hidden items-center justify-between border-b border-border bg-card px-6 py-4 shrink-0 shadow-sm">
         <div className="flex items-center gap-2">
           <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary font-display text-sm font-black text-primary-foreground">
             M
@@ -186,7 +186,7 @@ function AdminLayout() {
       </header>
 
       {/* Mobile sidebar overlay & drawer */}
-      <div className={cn("fixed inset-0 z-50 lg:hidden transition-opacity duration-300", mobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none")}>
+      <div className={cn("fixed inset-0 z-[60] lg:hidden transition-opacity duration-300", mobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none")}>
         {/* Backdrop overlay */}
         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
 
@@ -225,14 +225,6 @@ function AdminLayout() {
             <a href="mailto:support@mocs.in" className="hover:text-primary transition">
               support@mocs.in
             </a>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              API Status: Online
-            </span>
-            <a href="#" className="hover:text-primary transition">Developer API</a>
-            <a href="#" className="hover:text-primary transition">Documentation</a>
           </div>
         </footer>
       </main>

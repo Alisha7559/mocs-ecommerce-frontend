@@ -1,6 +1,6 @@
 import { createFileRoute, useBlocker } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Save, Plus, Trash2, Sliders, Image, Sparkles } from "lucide-react";
+import { Save, Plus, Trash2, Sliders, Image, Sparkles, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { apiClient, API_BASE_URL } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -21,6 +21,7 @@ function AdminSettingsPage() {
   // Hero Slides state
   const [heroSlides, setHeroSlides] = useState<any[]>([]);
   const [originalSlides, setOriginalSlides] = useState<any[]>([]);
+  const [openFocusIdx, setOpenFocusIdx] = useState<number | null>(null);
 
   // Categories Section Banners
   const [categoriesBanners, setCategoriesBanners] = useState<any[]>([
@@ -222,7 +223,8 @@ function AdminSettingsPage() {
               subtitle: "Explore the new MOCS lifestyle sneaker collection.",
               cta: "Shop Men",
               to: "/shop",
-              bg: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=1920"
+              bg: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=1920",
+              mobileFocus: "center"
             }
           ];
           setHeroSlides(fallbacks);
@@ -490,7 +492,8 @@ function AdminSettingsPage() {
         subtitle: "Fresh colors and premium quality mesh details.",
         cta: "Explore Now",
         to: "/shop",
-        bg: "https://images.unsplash.com/photo-1542291026-7eec264c27ff"
+        bg: "https://images.unsplash.com/photo-1542291026-7eec264c27ff",
+        mobileFocus: "center"
       }
     ]);
   };
@@ -542,7 +545,7 @@ function AdminSettingsPage() {
               : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
           )}
         >
-          Brand Banners
+          Collection Banners
         </button>
         <button
           onClick={() => scrollToSection("collections-banners")}
@@ -646,6 +649,58 @@ function AdminSettingsPage() {
                     className="input-field"
                     placeholder="e.g. /shop"
                   />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Mobile Image Focus</label>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setOpenFocusIdx(openFocusIdx === idx ? null : idx)}
+                      className="w-full text-left rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-sm font-semibold text-stone-900 transition-all focus:outline-none focus:ring-1 focus:ring-primary flex items-center justify-between shadow-sm cursor-pointer"
+                    >
+                      <span>
+                        {slide.mobileFocus === "right"
+                          ? "Right Focus (Footwear on Right)"
+                          : slide.mobileFocus === "left"
+                            ? "Left Focus (Footwear on Left)"
+                            : "Center Focus (Default)"}
+                      </span>
+                      <ChevronDown className={cn("h-4 w-4 text-primary transition-transform duration-200", openFocusIdx === idx && "rotate-180")} />
+                    </button>
+
+                    {openFocusIdx === idx && (
+                      <>
+                        <div
+                          className="fixed inset-0 z-30"
+                          onClick={() => setOpenFocusIdx(null)}
+                        />
+                        <div className="absolute left-0 right-0 mt-1.5 z-40 rounded-xl border border-stone-150 bg-white p-1.5 shadow-[0_10px_25px_rgba(0,0,0,0.08)] animate-in fade-in slide-in-from-top-2 duration-200">
+                          {[
+                            { value: "center", label: "Center Focus (Default)" },
+                            { value: "right", label: "Right Focus (Footwear on Right)" },
+                            { value: "left", label: "Left Focus (Footwear on Left)" }
+                          ].map((opt) => (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              onClick={() => {
+                                updateHeroSlideField(idx, "mobileFocus", opt.value);
+                                setOpenFocusIdx(null);
+                              }}
+                              className={cn(
+                                "w-full text-left rounded-lg px-3 py-2 text-xs font-semibold transition cursor-pointer",
+                                (slide.mobileFocus || "center") === opt.value
+                                  ? "bg-primary/10 text-primary"
+                                  : "text-stone-700 hover:bg-stone-50 hover:text-black"
+                              )}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
                 <div className="sm:col-span-2">
                   <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Background Image</label>

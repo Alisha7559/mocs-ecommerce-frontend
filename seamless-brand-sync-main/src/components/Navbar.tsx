@@ -323,41 +323,12 @@ export function Navbar() {
                     to={l.to}
                     search={l.search as any}
                     onClick={() => setMobileOpen(false)}
-                    className="rounded-xl border border-transparent px-3 py-2 text-lg font-semibold transition-all hover:border-primary hover:bg-primary/5"
+                    className="rounded-xl border border-transparent px-3 py-2 text-lg font-semibold text-stone-900 transition-all hover:border-primary hover:bg-primary/5"
+                    activeProps={{ className: "text-primary border-primary bg-primary/20" }}
                   >
                     {l.label}
                   </Link>
                 ))}
-
-                {/* Wishlist & Cart inside the mobile drawer */}
-                <Link
-                  to="/wishlist"
-                  onClick={() => setMobileOpen(false)}
-                  className="rounded-xl border border-transparent px-3 py-2 text-lg font-semibold transition-all hover:border-primary hover:bg-primary/5 flex items-center justify-between"
-                >
-                  <span>Wishlist</span>
-                  {wishlist.length > 0 && (
-                    <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary">
-                      {wishlist.length}
-                    </span>
-                  )}
-                </Link>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileOpen(false);
-                    setCartOpen(true);
-                  }}
-                  className="rounded-xl border border-transparent px-3 py-2 text-lg font-semibold transition-all hover:border-primary hover:bg-primary/5 text-left flex items-center justify-between w-full"
-                >
-                  <span>Shopping Cart</span>
-                  {cartCount > 0 && (
-                    <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary">
-                      {cartCount}
-                    </span>
-                  )}
-                </button>
               </nav>
 
               <div className="mt-6 border-t border-border pt-4">

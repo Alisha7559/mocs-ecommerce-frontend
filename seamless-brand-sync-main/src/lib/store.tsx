@@ -157,14 +157,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     );
 
   const toggleWishlist = (product: Product) => {
-    setWishlist((prev) => {
-      if (prev.includes(product.id)) {
-        toast("Removed from wishlist");
-        return prev.filter((id) => id !== product.id);
-      }
+    const isAdded = wishlist.includes(product.id);
+    if (isAdded) {
+      toast("Removed from wishlist");
+      setWishlist((prev) => prev.filter((id) => id !== product.id));
+    } else {
       toast.success("Added to wishlist", { description: product.name });
-      return [...prev, product.id];
-    });
+      setWishlist((prev) => [...prev, product.id]);
+    }
   };
 
   const pushRecentlyViewed = (id: string) =>

@@ -22,7 +22,7 @@ export function QualityPromise({ collage }: { collage?: any[] }) {
       style={{ clipPath: "inset(0 0 0 0)" }}
     >
       {/* Viewport-Fixed Background Grid Collage filled completely edge-to-edge with light blur */}
-      <div 
+      <div
         className="fixed inset-0 w-full h-full pointer-events-none z-0 opacity-100 select-none flex items-center justify-center bg-[#0B0A0A]"
       >
         <div className="grid grid-cols-12 grid-rows-12 gap-2 w-full h-full bg-[#0B0A0A]">
@@ -56,20 +56,21 @@ export function QualityPromise({ collage }: { collage?: any[] }) {
             {getImageUrl(5) && <img src={getImageUrl(5)} alt="" className="w-full h-full object-cover blur-[1.5px] scale-105" />}
           </div>
         </div>
-        {/* Dark overlay for contrast and image blending */}
-        <div className="absolute inset-0 bg-black/30 pointer-events-none z-10" />
+        {/* Dark overlay for contrast and image blending with an orange wash */}
+        <div className="absolute inset-0 bg-black/45 pointer-events-none z-10" />
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-00/20 via-transparent to-orange-500/10 pointer-events-none z-10" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] rounded-full bg-primary/25 blur-[100px] sm:blur-[150px] pointer-events-none z-10" />
       </div>
 
       {/* Center-aligned content container directly overlaying the collage background */}
       <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 z-20 text-center flex flex-col items-center justify-center min-h-[300px]">
-        <div className="bg-white border border-stone-200/85 p-8 sm:p-12 rounded-3xl max-w-3xl mx-auto shadow-xl space-y-6">
+        <div className="bg-black/55 border border-orange-700/50 backdrop-blur-xl p-8 sm:p-12 rounded-3xl max-w-3xl mx-auto shadow-[0_0_55px_rgba(194,65,12,0.45)] space-y-6">
           <Reveal delay={0.1}>
-            <h2 className="font-display text-4xl sm:text-5xl font-extrabold leading-tight text-stone-950 max-w-2xl mx-auto">
-              MOCS <span className="text-primary">FOOTWEARS</span>
-            </h2>
+            <h2 className="font-display text-4xl sm:text-5xl font-extrabold leading-tight text-white max-w-2xl mx-auto">
+              MOCS <span className="text-orange-500">FOOTWEARS</span>            </h2>
           </Reveal>
           <Reveal delay={0.2}>
-            <p className="text-sm md:text-base leading-relaxed text-stone-700 font-medium max-w-2xl mx-auto">
+            <p className="text-sm md:text-base leading-relaxed text-stone-200/90 font-medium max-w-2xl mx-auto">
               Every pair is crafted with premium Polyurethane (PU), utilizing advanced direct injection molding for lightweight durability. We design for comfort, certify for standards, and engineer to keep you moving — different.
             </p>
           </Reveal>
@@ -77,13 +78,13 @@ export function QualityPromise({ collage }: { collage?: any[] }) {
             <div className="flex flex-wrap justify-center gap-4 pt-2">
               <Link
                 to="/shop"
-                className="group inline-flex items-center gap-2 rounded-full bg-primary px-8 py-4 text-xs font-bold uppercase tracking-wide text-white transition-all hover:-translate-y-0.5 hover:brightness-110 shadow-md"
+                className="group inline-flex items-center gap-2 rounded-full bg-primary px-8 py-4 text-xs font-bold uppercase tracking-wide text-white transition-all hover:-translate-y-0.5 hover:brightness-110 shadow-md hover:shadow-orange-500/20"
               >
                 Explore the collection <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Link>
               <Link
                 to="/about"
-                className="inline-flex items-center gap-2 rounded-full border border-stone-300 bg-stone-50/50 px-8 py-4 text-xs font-bold uppercase tracking-wide text-stone-800 transition-all hover:-translate-y-0.5 hover:bg-stone-100 hover:text-primary hover:border-primary"
+                className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-8 py-4 text-xs font-bold uppercase tracking-wide text-white transition-all hover:-translate-y-0.5 hover:bg-white/10 hover:border-primary/50 hover:text-primary"
               >
                 Our Quality Process
               </Link>

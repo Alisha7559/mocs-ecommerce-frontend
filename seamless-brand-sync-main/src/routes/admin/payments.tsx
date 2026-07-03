@@ -69,7 +69,7 @@ function AdminPayments() {
 
       {/* Audit Stats Panel */}
       {stats && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-2xl border border-border bg-card p-4 shadow-soft">
             <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Settled Revenue</span>
             <p className="font-display text-2xl font-extrabold text-emerald-500 mt-2">₹{stats.totalRevenue.toLocaleString()}</p>
