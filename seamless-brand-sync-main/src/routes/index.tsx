@@ -263,10 +263,6 @@ function ScrollBrandReveal({ collections }: { collections: any[] }) {
               src={bgUrl}
               alt={item.title}
               loading="lazy"
-              onError={(e) => {
-                e.currentTarget.onerror = null;
-                e.currentTarget.src = "https://images.unsplash.com/photo-1517649763962-0c623066013b?q=70&auto=format&fit=crop&w=400";
-              }}
               className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
             />
           ) : null}
@@ -632,10 +628,6 @@ function Home() {
                 <img
                   src={getImageUrl(categoriesBanners[0].bg)}
                   alt={categoriesBanners[0].title}
-                  onError={(e) => {
-                    e.currentTarget.onerror = null;
-                    e.currentTarget.src = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=1920";
-                  }}
                   className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105"
                 />
               ) : (
@@ -684,10 +676,6 @@ function Home() {
                     <img
                       src={getImageUrl(cat.bg)}
                       alt={cat.title}
-                      onError={(e) => {
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.src = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=800";
-                      }}
                       className="absolute inset-0 h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105"
                     />
                   ) : (

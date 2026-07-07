@@ -379,10 +379,6 @@ function ProductDetail() {
                 key={active}
                 src={getImageUrl(gallery[active].src)}
                 alt={`${product.name} — ${gallery[active].label}`}
-                onError={(e) => {
-                  e.currentTarget.onerror = null;
-                  e.currentTarget.src = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600";
-                }}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -416,10 +412,6 @@ function ProductDetail() {
                 <img
                   src={getImageUrl(view.src)}
                   alt={view.label}
-                  onError={(e) => {
-                    e.currentTarget.onerror = null;
-                    e.currentTarget.src = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=300";
-                  }}
                   className="h-full w-full object-cover"
                 />
                 <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/90 to-transparent py-1 text-center text-[10px] font-semibold uppercase tracking-wide">

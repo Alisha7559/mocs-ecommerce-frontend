@@ -43,10 +43,6 @@ export function ProductCard({
             src={getImageUrl(product.image)}
             alt={product.name}
             loading="lazy"
-            onError={(e) => {
-              e.currentTarget.onerror = null;
-              e.currentTarget.src = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600";
-            }}
             className={cn(
               "h-full w-full object-cover transition-all duration-700 ease-out mix-blend-multiply absolute inset-0",
               product.views && product.views.length > 1 ? "group-hover:opacity-0" : ""
@@ -58,10 +54,6 @@ export function ProductCard({
               src={getImageUrl(product.views[1].src)}
               alt={`${product.name} Hover`}
               loading="lazy"
-              onError={(e) => {
-                e.currentTarget.onerror = null;
-                e.currentTarget.src = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600";
-              }}
               className="h-full w-full object-cover transition-all duration-700 ease-out opacity-0 group-hover:opacity-100 mix-blend-multiply absolute inset-0"
             />
           )}
@@ -154,10 +146,6 @@ export function ProductCard({
             loading="lazy"
             width={800}
             height={800}
-            onError={(e) => {
-              e.currentTarget.onerror = null;
-              e.currentTarget.src = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600";
-            }}
             className="relative h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
           />
 

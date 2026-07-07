@@ -9,9 +9,6 @@ export function cn(...inputs: ClassValue[]) {
 export function getImageUrl(url?: any): string {
   if (typeof url !== "string" || !url) return "";
   const normalizedUrl = url.trim().replace(/\\/g, "/");
-  if (normalizedUrl.includes("/kids/shoes.jpg") || normalizedUrl.includes("kids/shoes.jpg")) {
-    return "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600";
-  }
   if (normalizedUrl.startsWith("http://") || normalizedUrl.startsWith("https://") || normalizedUrl.startsWith("data:")) {
     return normalizedUrl;
   }

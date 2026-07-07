@@ -16,17 +16,7 @@ type Slide = {
   mobileFocus?: "center" | "left" | "right";
 };
 
-const defaultSlides: Slide[] = [
-  {
-    eyebrow: "Premium Comfort",
-    title: "Step Into Style",
-    subtitle: "Explore the new MOCS lifestyle sneaker collection.",
-    cta: "Shop Now",
-    to: "/shop",
-    bg: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=1920",
-    mobileFocus: "center"
-  }
-];
+const defaultSlides: Slide[] = [];
 
 export function Hero() {
   const [active, setActive] = useState(0);
@@ -121,10 +111,7 @@ export function Hero() {
             key={active}
             src={current.bg}
             alt={current.title}
-            onError={(e) => {
-              e.currentTarget.onerror = null;
-              e.currentTarget.src = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=1920";
-            }}
+
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "-100%" }}
