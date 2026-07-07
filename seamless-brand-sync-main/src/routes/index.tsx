@@ -107,6 +107,22 @@ function TrendingProducts({ products }: { products: any[] }) {
   const scrollPrev = () => emblaApi && emblaApi.scrollPrev();
   const scrollNext = () => emblaApi && emblaApi.scrollNext();
 
+  const [prevBtnDisabled, setPrevBtnDisabled] = useState(true);
+  const [nextBtnDisabled, setNextBtnDisabled] = useState(true);
+
+  const onSelect = () => {
+    if (!emblaApi) return;
+    setPrevBtnDisabled(!emblaApi.canScrollPrev());
+    setNextBtnDisabled(!emblaApi.canScrollNext());
+  };
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    onSelect();
+    emblaApi.on("select", onSelect);
+    emblaApi.on("reInit", onSelect);
+  }, [emblaApi]);
+
   return (
     <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <Reveal className="mb-10 text-left">
@@ -120,26 +136,26 @@ function TrendingProducts({ products }: { products: any[] }) {
             </p>
           </div>
 
-          {products.length > 4 && (
-            <div className="hidden lg:flex gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={scrollPrev}
-                aria-label="Previous trending products"
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-border/80 bg-background/95 hover:bg-background text-foreground hover:border-primary hover:text-primary transition shadow-card cursor-pointer hover:scale-105"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </button>
-              <button
-                type="button"
-                onClick={scrollNext}
-                aria-label="Next trending products"
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-border/80 bg-background/95 hover:bg-background text-foreground hover:border-primary hover:text-primary transition shadow-card cursor-pointer hover:scale-105"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </button>
-            </div>
-          )}
+          <div className="hidden lg:flex gap-2 shrink-0">
+            <button
+              type="button"
+              disabled={prevBtnDisabled}
+              onClick={scrollPrev}
+              aria-label="Previous trending products"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-border/80 bg-background/95 hover:bg-background text-foreground hover:border-primary hover:text-primary transition shadow-card cursor-pointer hover:scale-105 disabled:opacity-30 disabled:pointer-events-none"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              disabled={nextBtnDisabled}
+              onClick={scrollNext}
+              aria-label="Next trending products"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-border/80 bg-background/95 hover:bg-background text-foreground hover:border-primary hover:text-primary transition shadow-card cursor-pointer hover:scale-105 disabled:opacity-30 disabled:pointer-events-none"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+          </div>
         </div>
       </Reveal>
 
@@ -306,7 +322,7 @@ function ScrollBrandReveal({ collections }: { collections: any[] }) {
   }
 
   return (
-    <section className="mx-auto max-w-7xl px-4 pt-16 pb-4 sm:px-6 lg:px-8 overflow-hidden font-sans">
+    <section className="mx-auto max-w-7xl px-4 pt-2 pb-2 sm:px-6 lg:px-8 overflow-hidden font-sans">
       <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
         <Reveal>
           <span className="rounded-full bg-primary/10 px-4 py-1.5 text-xs font-extrabold uppercase tracking-widest text-primary">
@@ -453,6 +469,22 @@ function Home() {
   const scrollPrev = () => emblaApi && emblaApi.scrollPrev();
   const scrollNext = () => emblaApi && emblaApi.scrollNext();
 
+  const [prevBtnDisabled, setPrevBtnDisabled] = useState(true);
+  const [nextBtnDisabled, setNextBtnDisabled] = useState(true);
+
+  const onSelect = () => {
+    if (!emblaApi) return;
+    setPrevBtnDisabled(!emblaApi.canScrollPrev());
+    setNextBtnDisabled(!emblaApi.canScrollNext());
+  };
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    onSelect();
+    emblaApi.on("select", onSelect);
+    emblaApi.on("reInit", onSelect);
+  }, [emblaApi]);
+
   useEffect(() => {
     setAllProducts(products);
   }, [products]);
@@ -472,14 +504,7 @@ function Home() {
     const newProducts = allProducts.filter((p: any) => p.isNew);
     const regularProducts = allProducts.filter((p: any) => !p.isNew);
     const shuffled = [...regularProducts].sort(() => Math.random() - 0.5);
-    const combined = [...newProducts, ...shuffled];
-    const seen = new Set();
-    return combined.filter((p: any) => {
-      const key = p.artNumber || p.name;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
+    return [...newProducts, ...shuffled];
   }, [allProducts]);
 
   const newArrivals = useMemo(() => {
@@ -718,7 +743,7 @@ function Home() {
 
 
       {/* Products list */}
-      <section className="mx-auto max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
+      <section className="mx-auto max-w-7xl px-4 pb-2 sm:px-6 lg:px-8">
         <Reveal className="mb-10 flex flex-wrap items-end justify-between gap-4 text-left">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wide text-primary">
@@ -740,20 +765,22 @@ function Home() {
         </Reveal>
 
         <div className="relative">
-          {/* Circular float controls always visible on both sides of the cards */}
+          {/* Circular float controls visible dynamically on both sides of the cards */}
           <button
             type="button"
+            disabled={prevBtnDisabled}
             onClick={scrollPrev}
             aria-label="Previous products"
-            className="absolute -left-6 top-1/2 -translate-y-1/2 z-20 hidden lg:flex h-11 w-11 items-center justify-center rounded-full border border-border/80 bg-background/95 hover:bg-background text-foreground hover:border-primary hover:text-primary transition shadow-card cursor-pointer shrink-0 hover:scale-105"
+            className="absolute -left-6 top-1/2 -translate-y-1/2 z-20 hidden lg:flex h-11 w-11 items-center justify-center rounded-full border border-border/80 bg-background/95 hover:bg-background text-foreground hover:border-primary hover:text-primary transition-all duration-300 shadow-card cursor-pointer shrink-0 hover:scale-105 disabled:opacity-0 disabled:pointer-events-none"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
           <button
             type="button"
+            disabled={nextBtnDisabled}
             onClick={scrollNext}
             aria-label="Next products"
-            className="absolute -right-6 top-1/2 -translate-y-1/2 z-20 hidden lg:flex h-11 w-11 items-center justify-center rounded-full border border-border/80 bg-background/95 hover:bg-background text-foreground hover:border-primary hover:text-primary transition shadow-card cursor-pointer shrink-0 hover:scale-105"
+            className="absolute -right-6 top-1/2 -translate-y-1/2 z-20 hidden lg:flex h-11 w-11 items-center justify-center rounded-full border border-border/80 bg-background/95 hover:bg-background text-foreground hover:border-primary hover:text-primary transition-all duration-300 shadow-card cursor-pointer shrink-0 hover:scale-105 disabled:opacity-0 disabled:pointer-events-none"
           >
             <ChevronRight className="h-5 w-5" />
           </button>
@@ -775,7 +802,7 @@ function Home() {
         </div>
       </section>
 
-      <div className="mb-4 sm:mb-6 lg:mb-8">
+      <div className="my-2">
         <ScrollBrandReveal collections={collectionsBanners} />
       </div>
 
