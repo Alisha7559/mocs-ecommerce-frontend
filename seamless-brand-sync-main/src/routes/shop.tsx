@@ -8,7 +8,7 @@ import {
   type Product,
 } from "@/lib/products";
 import { ProductCard, ProductCardSkeleton } from "@/components/ProductCard";
-import { cn } from "@/lib/utils";
+import { cn, getImageUrl } from "@/lib/utils";
 import { apiClient, API_BASE_URL } from "@/lib/api";
 
 // Styled custom dropdown that animates open/close instead of using native <select>.
@@ -109,7 +109,7 @@ export const Route = createFileRoute("/shop")({
           rating: p.rating || 5,
           reviews: p.reviewCount || 0,
           stock: p.stock || 0,
-          image: p.coverImage.startsWith("/") ? `${API_BASE_URL}${p.coverImage}` : p.coverImage,
+          image: getImageUrl(p.coverImage),
           colors: p.colors && p.colors.length > 0
             ? p.colors.map((c: any) => ({ name: c.name, hex: c.hex }))
             : [{ name: "Default", hex: "#000000" }],
@@ -118,13 +118,13 @@ export const Route = createFileRoute("/shop")({
           isNew: p.isNew,
           views: p.additionalImages && p.additionalImages.length > 0
             ? [
-              { label: "Front", src: p.coverImage.startsWith("/") ? `${API_BASE_URL}${p.coverImage}` : p.coverImage },
+              { label: "Front", src: getImageUrl(p.coverImage) },
               ...p.additionalImages.map((img: any) => ({
                 label: img.label || "Side",
-                src: img.url.startsWith("/") ? `${API_BASE_URL}${img.url}` : img.url
+                src: getImageUrl(img.url)
               }))
             ]
-            : [{ label: "Front", src: p.coverImage.startsWith("/") ? `${API_BASE_URL}${p.coverImage}` : p.coverImage }]
+            : [{ label: "Front", src: getImageUrl(p.coverImage) }]
         }));
         return { products: apiProducts };
       }

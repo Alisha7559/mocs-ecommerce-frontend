@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "motion/react";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { apiClient, API_BASE_URL } from "@/lib/api";
-import { cn } from "@/lib/utils";
+import { cn, getImageUrl } from "@/lib/utils";
 import heroShoe from "@/assets/hero-shoe.png";
 
 type Slide = {
@@ -16,7 +16,17 @@ type Slide = {
   mobileFocus?: "center" | "left" | "right";
 };
 
-const defaultSlides: Slide[] = [];
+const defaultSlides: Slide[] = [
+  {
+    eyebrow: "Premium Comfort",
+    title: "Step Into Style",
+    subtitle: "Explore the new MOCS lifestyle sneaker collection.",
+    cta: "Shop Now",
+    to: "/shop",
+    bg: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=1920",
+    mobileFocus: "center"
+  }
+];
 
 export function Hero() {
   const [active, setActive] = useState(0);
@@ -28,15 +38,25 @@ export function Hero() {
     const fetchHeroSettings = async () => {
       try {
         const res = await apiClient.settings.get("hero_slides");
-        if (res && res.value && Array.isArray(res.value) && res.value.length > 0) {
-          const mapped = res.value.map((slide: any) => ({
-            ...slide,
-            bg: slide.bg.startsWith("/") ? `${API_BASE_URL}${slide.bg}` : slide.bg,
+        const slidesArray = res && (Array.isArray(res) ? res : (res.value && Array.isArray(res.value) ? res.value : null));
+        
+        if (slidesArray && slidesArray.length > 0) {
+          const mapped = slidesArray.map((slide: any) => ({
+            eyebrow: slide.eyebrow || "",
+            title: slide.title || "",
+            subtitle: slide.subtitle || "",
+            cta: slide.cta || "Shop Now",
+            to: (slide.to || "/shop") as any,
+            mobileFocus: slide.mobileFocus || "center",
+            bg: getImageUrl(slide.bg) || "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=1920",
           }));
           setHeroSlides(mapped);
+        } else {
+          setHeroSlides(defaultSlides);
         }
       } catch (err) {
         console.warn("Failed to load dynamic hero slides, using fallback", err);
+        setHeroSlides(defaultSlides);
       }
     };
     fetchHeroSettings();
@@ -65,6 +85,7 @@ export function Hero() {
   };
 
   const renderTitle = (title: string) => {
+    if (typeof title !== "string" || !title) return null;
     const lines = title.split("\n").map((line) => line.trim());
     return lines.map((line, index) => {
       const words = line.split(" ");
@@ -100,6 +121,10 @@ export function Hero() {
             key={active}
             src={current.bg}
             alt={current.title}
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=1920";
+            }}
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "-100%" }}

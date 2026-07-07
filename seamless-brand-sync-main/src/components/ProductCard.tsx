@@ -36,90 +36,95 @@ export function ProductCard({
         <Link
           to="/product/$id"
           params={{ id: product.id }}
-          className="flex flex-col overflow-hidden rounded-3xl aspect-[1.0] shadow-soft transition-all duration-500 ease-out hover:scale-105 hover:-translate-y-2 hover:shadow-xl relative bg-[#eaeaea] border border-black/5"
+          className="relative block w-full aspect-square overflow-hidden rounded-3xl shadow-soft transition-all duration-500 ease-out hover:scale-105 hover:-translate-y-2 hover:shadow-xl bg-[#eaeaea] border border-black/5"
         >
-          {/* Top part: Image */}
-          <div className="relative flex-1 min-h-0 bg-[#eaeaea]">
-            {/* Base Image */}
-            <img
-              src={getImageUrl(product.image)}
-              alt={product.name}
-              loading="lazy"
-              className={cn(
-                "h-full w-full object-cover transition-all duration-700 ease-out mix-blend-multiply absolute inset-0",
-                product.views && product.views.length > 1 ? "group-hover:opacity-0" : ""
-              )}
-            />
-            {/* Hover Image */}
-            {product.views && product.views.length > 1 && (
-              <img
-                src={getImageUrl(product.views[1].src)}
-                alt={`${product.name} Hover`}
-                loading="lazy"
-                className="h-full w-full object-cover transition-all duration-700 ease-out opacity-0 group-hover:opacity-100 mix-blend-multiply absolute inset-0"
-              />
+          {/* Base Image */}
+          <img
+            src={getImageUrl(product.image)}
+            alt={product.name}
+            loading="lazy"
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600";
+            }}
+            className={cn(
+              "h-full w-full object-cover transition-all duration-700 ease-out mix-blend-multiply absolute inset-0",
+              product.views && product.views.length > 1 ? "group-hover:opacity-0" : ""
             )}
+          />
+          {/* Hover Image */}
+          {product.views && product.views.length > 1 && (
+            <img
+              src={getImageUrl(product.views[1].src)}
+              alt={`${product.name} Hover`}
+              loading="lazy"
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600";
+              }}
+              className="h-full w-full object-cover transition-all duration-700 ease-out opacity-0 group-hover:opacity-100 mix-blend-multiply absolute inset-0"
+            />
+          )}
 
-            {/* Top-Left Category Badge */}
-            <div className="absolute left-3 top-3">
-              <span className="rounded-full bg-white/90 backdrop-blur-md px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-stone-850 border border-black/5 shadow-xs">
-                {product.category}
-              </span>
+          {/* Top-Left Category Badge */}
+          <div className="absolute left-3 top-3 z-20">
+            <span className="rounded-full bg-white/90 backdrop-blur-md px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-stone-850 border border-black/5 shadow-xs">
+              {product.category}
+            </span>
+          </div>
+
+          {/* Wishlist Button on Top-Right */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              toggleWishlist(product);
+            }}
+            aria-label="Toggle wishlist"
+            className="absolute right-3 top-3 grid h-7 w-7 place-items-center rounded-full bg-white/90 text-stone-850 border border-black/5 backdrop-blur-md transition-all duration-300 hover:text-primary hover:scale-110 cursor-pointer z-20 shadow-xs"
+          >
+            <Heart
+              className={cn("h-3 w-3 transition-colors", wished && "fill-primary text-primary")}
+            />
+          </button>
+
+          {/* Bottom Gradient overlay for text legibility */}
+          <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/60 via-black/20 to-transparent pointer-events-none z-10" />
+
+          {/* Floating details inside the image box */}
+          <div className="absolute inset-x-0 bottom-0 p-4 z-20 flex items-end justify-between">
+            <div className="text-left space-y-0.5 min-w-0 flex-1 pr-2">
+              {/* Product Name */}
+              <h4 className="font-display text-xs sm:text-sm font-extrabold text-white leading-tight truncate drop-shadow-sm">
+                {product.name}
+              </h4>
+              {/* Price */}
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-sm sm:text-base font-black text-white drop-shadow-sm">₹{product.price}</span>
+                {product.oldPrice && (
+                  <span className="text-[10px] text-stone-300 line-through font-medium drop-shadow-sm">
+                    ₹{product.oldPrice}
+                  </span>
+                )}
+              </div>
             </div>
 
-            {/* Wishlist Button on Top-Right */}
+            {/* Add to Cart Button */}
             <button
               type="button"
               onClick={(e) => {
                 e.preventDefault();
-                toggleWishlist(product);
+                if (!isAuthed()) {
+                  navigate({ to: "/auth", search: { redirect: `/product/${product.id}` } });
+                  return;
+                }
+                addToCart(product);
               }}
-              aria-label="Toggle wishlist"
-              className="absolute right-3 top-3 grid h-7 w-7 place-items-center rounded-full bg-white/90 text-stone-850 border border-black/5 backdrop-blur-md transition-all duration-300 hover:text-primary hover:scale-110 cursor-pointer z-20 shadow-xs"
+              aria-label="Add to cart"
+              className="grid h-8 w-8 place-items-center rounded-xl bg-primary text-white transition-all duration-300 hover:bg-primary-glow hover:scale-105 cursor-pointer shadow-md shrink-0"
             >
-              <Heart
-                className={cn("h-3 w-3 transition-colors", wished && "fill-primary text-primary")}
-              />
+              <ShoppingBag className="h-3.5 w-3.5 text-white" />
             </button>
-
-            {/* Bottom Gradient overlay for text legibility */}
-            <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/60 via-black/20 to-transparent pointer-events-none z-10" />
-
-            {/* Floating details inside the image box */}
-            <div className="absolute inset-x-0 bottom-0 p-4 z-20 flex items-end justify-between">
-              <div className="text-left space-y-0.5 min-w-0 flex-1 pr-2">
-                {/* Product Name */}
-                <h4 className="font-display text-xs sm:text-sm font-extrabold text-white leading-tight truncate drop-shadow-sm">
-                  {product.name}
-                </h4>
-                {/* Price */}
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-sm sm:text-base font-black text-white drop-shadow-sm">₹{product.price}</span>
-                  {product.oldPrice && (
-                    <span className="text-[10px] text-stone-300 line-through font-medium drop-shadow-sm">
-                      ₹{product.oldPrice}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Add to Cart Button */}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (!isAuthed()) {
-                    navigate({ to: "/auth", search: { redirect: `/product/${product.id}` } });
-                    return;
-                  }
-                  addToCart(product);
-                }}
-                aria-label="Add to cart"
-                className="grid h-8 w-8 place-items-center rounded-xl bg-primary text-white transition-all duration-300 hover:bg-primary-glow hover:scale-105 cursor-pointer shadow-md shrink-0"
-              >
-                <ShoppingBag className="h-3.5 w-3.5 text-white" />
-              </button>
-            </div>
           </div>
         </Link>
       </motion.div>
@@ -141,7 +146,7 @@ export function ProductCard({
         className="block overflow-hidden rounded-2xl bg-white border border-orange-500 lg:border-orange-500/12 shadow-[0_0_15px_rgba(244,106,30,0.18)] lg:shadow-soft transition-all duration-350 group-hover:-translate-y-2 group-hover:border-primary group-hover:shadow-[0_12px_40px_rgba(244,106,30,0.15)] text-stone-900"
       >
         <div
-          className="relative aspect-[1.1] overflow-hidden bg-white"
+          className="relative aspect-square overflow-hidden bg-white"
         >
           <img
             src={getImageUrl(product.image)}
@@ -149,6 +154,10 @@ export function ProductCard({
             loading="lazy"
             width={800}
             height={800}
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600";
+            }}
             className="relative h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
           />
 

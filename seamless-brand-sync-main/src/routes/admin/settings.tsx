@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Save, Plus, Trash2, Sliders, Image, Sparkles, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { apiClient, API_BASE_URL } from "@/lib/api";
-import { cn } from "@/lib/utils";
+import { cn, getImageUrl } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/settings")({
   head: () => ({
@@ -545,7 +545,7 @@ function AdminSettingsPage() {
               : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
           )}
         >
-          Collection Banners
+          Category Banners
         </button>
         <button
           onClick={() => scrollToSection("collections-banners")}
@@ -770,11 +770,7 @@ function AdminSettingsPage() {
                         {currentBanner.bg ? (
                           <div className="absolute inset-0 h-full w-full">
                             <img
-                              src={
-                                currentBanner.bg.startsWith("/")
-                                  ? `${API_BASE_URL}${currentBanner.bg}`
-                                  : currentBanner.bg
-                              }
+                              src={getImageUrl(currentBanner.bg)}
                               alt="Live Preview"
                               className="h-full w-full object-cover"
                             />
@@ -801,11 +797,7 @@ function AdminSettingsPage() {
                         {currentBanner.bg ? (
                           <div className="absolute inset-0 h-full w-full">
                             <img
-                              src={
-                                currentBanner.bg.startsWith("/")
-                                  ? `${API_BASE_URL}${currentBanner.bg}`
-                                  : currentBanner.bg
-                              }
+                              src={getImageUrl(currentBanner.bg)}
                               alt="Live Preview"
                               className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105"
                             />
@@ -971,11 +963,7 @@ function AdminSettingsPage() {
                       {currentCollection.bg ? (
                         <div className="absolute inset-0 h-full w-full">
                           <img
-                            src={
-                              currentCollection.bg.startsWith("/")
-                                ? `${API_BASE_URL}${currentCollection.bg}`
-                                : currentCollection.bg
-                            }
+                            src={getImageUrl(currentCollection.bg)}
                             alt="Live Preview"
                             className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                           />
@@ -1131,7 +1119,7 @@ function AdminSettingsPage() {
                             >
                               {item.bg ? (
                                 <img
-                                  src={item.bg.startsWith("/") ? `${API_BASE_URL}${item.bg}` : item.bg}
+                                  src={getImageUrl(item.bg)}
                                   alt=""
                                   className="w-full h-full object-cover filter grayscale"
                                 />

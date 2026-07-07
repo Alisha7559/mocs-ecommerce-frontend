@@ -1,11 +1,33 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { Reveal } from "@/components/Reveal";
-import { API_BASE_URL } from "@/lib/api";
+import { getImageUrl as resolveImage } from "@/lib/utils";
 
 export function QualityPromise({ collage }: { collage?: any[] }) {
   // Fallback items if not configured
-  const defaultCollage: any[] = [];
+  const defaultCollage: any[] = [
+    {
+      key: "top-left",
+      title: "Top Left Image",
+      to: "/shop",
+      bg: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?q=80&w=800"
+    },
+    {
+      key: "bottom-left",
+      subtitle: "CONFIDENCE",
+      title: "Feoro Woman Power",
+      desc: "Bold heels & elegant flats for the woman who leads.",
+      cta: "Explore",
+      to: "/shop",
+      bg: "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?q=80&w=800"
+    },
+    {
+      key: "right",
+      title: "Right Side Image",
+      to: "/shop",
+      bg: "https://images.unsplash.com/photo-1539185441755-769473a23570?q=80&w=800"
+    }
+  ];
 
   const collageList = collage && collage.length > 0 ? collage : defaultCollage;
 
@@ -13,7 +35,7 @@ export function QualityPromise({ collage }: { collage?: any[] }) {
     if (!collageList || collageList.length === 0) return "";
     const item = collageList[idx % collageList.length];
     if (!item || !item.bg) return "";
-    return item.bg.startsWith("/") ? `${API_BASE_URL}${item.bg}` : item.bg;
+    return resolveImage(item.bg);
   };
 
   return (
@@ -28,32 +50,92 @@ export function QualityPromise({ collage }: { collage?: any[] }) {
         <div className="grid grid-cols-12 grid-rows-12 gap-2 w-full h-full bg-[#0B0A0A]">
           {/* Frame 1: Top-Left (Vertical, col 1-3, row 1-7) */}
           <div className="col-span-3 row-span-7 overflow-hidden bg-stone-900">
-            {getImageUrl(0) && <img src={getImageUrl(0)} alt="" className="w-full h-full object-cover blur-[1.5px] scale-105" />}
+            {getImageUrl(0) && (
+              <img
+                src={getImageUrl(0)}
+                alt=""
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?q=80&w=800";
+                }}
+                className="w-full h-full object-cover blur-[1.5px] scale-105"
+              />
+            )}
           </div>
 
           {/* Frame 2: Top-Middle (Tall Vertical, col 4-8, row 1-7) */}
           <div className="col-span-5 row-span-7 overflow-hidden bg-stone-900">
-            {getImageUrl(1) && <img src={getImageUrl(1)} alt="" className="w-full h-full object-cover blur-[1.5px] scale-105" />}
+            {getImageUrl(1) && (
+              <img
+                src={getImageUrl(1)}
+                alt=""
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?q=80&w=800";
+                }}
+                className="w-full h-full object-cover blur-[1.5px] scale-105"
+              />
+            )}
           </div>
 
           {/* Frame 3: Top-Right (Medium Vertical, col 9-12, row 1-7) */}
           <div className="col-span-4 row-span-7 overflow-hidden bg-stone-900">
-            {getImageUrl(2) && <img src={getImageUrl(2)} alt="" className="w-full h-full object-cover blur-[1.5px] scale-105" />}
+            {getImageUrl(2) && (
+              <img
+                src={getImageUrl(2)}
+                alt=""
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = "https://images.unsplash.com/photo-1539185441755-769473a23570?q=80&w=800";
+                }}
+                className="w-full h-full object-cover blur-[1.5px] scale-105"
+              />
+            )}
           </div>
 
           {/* Frame 4: Bottom-Left (Wide Horizontal, col 1-5, row 8-12) */}
           <div className="col-span-5 row-span-5 col-start-1 row-start-8 overflow-hidden bg-stone-900">
-            {getImageUrl(3) && <img src={getImageUrl(3)} alt="" className="w-full h-full object-cover blur-[1.5px] scale-105" />}
+            {getImageUrl(3) && (
+              <img
+                src={getImageUrl(3)}
+                alt=""
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = "https://images.unsplash.com/photo-1603808033192-082d6f74b302?q=80&w=800";
+                }}
+                className="w-full h-full object-cover blur-[1.5px] scale-105"
+              />
+            )}
           </div>
 
           {/* Frame 5: Bottom-Middle (Medium Vertical, col 6-9, row 8-12) */}
           <div className="col-span-4 row-span-5 col-start-6 row-start-8 overflow-hidden bg-stone-900">
-            {getImageUrl(4) && <img src={getImageUrl(4)} alt="" className="w-full h-full object-cover blur-[1.5px] scale-105" />}
+            {getImageUrl(4) && (
+              <img
+                src={getImageUrl(4)}
+                alt=""
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=800";
+                }}
+                className="w-full h-full object-cover blur-[1.5px] scale-105"
+              />
+            )}
           </div>
 
           {/* Frame 6: Bottom-Right (Small, col 10-12, row 8-12) */}
           <div className="col-span-3 row-span-5 col-start-10 row-start-8 overflow-hidden bg-stone-900">
-            {getImageUrl(5) && <img src={getImageUrl(5)} alt="" className="w-full h-full object-cover blur-[1.5px] scale-105" />}
+            {getImageUrl(5) && (
+              <img
+                src={getImageUrl(5)}
+                alt=""
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = "https://images.unsplash.com/photo-1533867617858-e7b97e060509?q=80&w=800";
+                }}
+                className="w-full h-full object-cover blur-[1.5px] scale-105"
+              />
+            )}
           </div>
         </div>
         {/* Dark overlay for contrast and image blending with an orange wash */}

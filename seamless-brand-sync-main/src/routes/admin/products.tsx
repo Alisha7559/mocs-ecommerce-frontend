@@ -4,7 +4,7 @@ import { ShoppingBag, Search, Plus, Edit3, Trash2, RotateCcw, X, AlertTriangle, 
 import { toast } from "sonner";
 import { apiClient, API_BASE_URL, getToken } from "@/lib/api";
 import { AdminDropdown } from "@/components/admin/AdminShell";
-import { cn } from "@/lib/utils";
+import { cn, getImageUrl } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/products")({
   head: () => ({
@@ -660,7 +660,7 @@ function AdminProducts() {
                     <td className="p-4">
                       <div className="flex items-center gap-3">
                         <img
-                          src={p.coverImage.startsWith("/") ? `${API_BASE_URL}${p.coverImage}` : p.coverImage}
+                          src={getImageUrl(p.coverImage)}
                           alt={p.name}
                           className="h-12 w-12 rounded-xl object-cover bg-muted border border-border shrink-0"
                         />
@@ -1035,7 +1035,7 @@ function AdminProducts() {
                               </div>
                               {shades[activeShadeIndex].coverImage && (
                                 <div className="flex items-center gap-2 rounded-xl border border-border p-2 bg-muted/20">
-                                  <img src={shades[activeShadeIndex].coverImage.startsWith("/") ? `${API_BASE_URL}${shades[activeShadeIndex].coverImage}` : shades[activeShadeIndex].coverImage} className="h-10 w-10 object-cover rounded-lg" />
+                                  <img src={getImageUrl(shades[activeShadeIndex].coverImage)} className="h-10 w-10 object-cover rounded-lg" />
                                   <span className="text-[10px] truncate max-w-[200px] font-medium text-muted-foreground">{shades[activeShadeIndex].coverImage}</span>
                                 </div>
                               )}
@@ -1148,7 +1148,7 @@ function AdminProducts() {
                                 </div>
                                 {img.url && (
                                   <div className="flex items-center gap-2 rounded-lg border border-border/40 p-1.5 bg-muted/10">
-                                    <img src={img.url.startsWith("/") ? `${API_BASE_URL}${img.url}` : img.url} className="h-6 w-6 object-cover rounded" />
+                                    <img src={getImageUrl(img.url)} className="h-6 w-6 object-cover rounded" />
                                     <span className="text-[9px] truncate text-muted-foreground font-medium flex-1">{img.url}</span>
                                   </div>
                                 )}

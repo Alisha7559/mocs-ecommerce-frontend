@@ -6,7 +6,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { Reveal, Stagger } from "@/components/Reveal";
 import { apiClient, API_BASE_URL } from "@/lib/api";
 import useEmblaCarousel from "embla-carousel-react";
-import { cn } from "@/lib/utils";
+import { cn, getImageUrl } from "@/lib/utils";
 // Extracted Components
 import { Hero } from "@/components/Hero";
 import { QualityPromise } from "@/components/QualityPromise";
@@ -28,7 +28,7 @@ export const Route = createFileRoute("/")({
           rating: p.rating || 5,
           reviews: p.reviewCount || 0,
           stock: p.stock || 0,
-          image: p.coverImage.startsWith("/") ? `${API_BASE_URL}${p.coverImage}` : p.coverImage,
+          image: getImageUrl(p.coverImage),
           colors: p.colors && p.colors.length > 0
             ? p.colors.map((c: any) => ({ name: c.name, hex: c.hex }))
             : [{ name: "Default", hex: "#000000" }],
@@ -38,13 +38,13 @@ export const Route = createFileRoute("/")({
           isTrending: p.isTrending,
           views: p.additionalImages && p.additionalImages.length > 0
             ? [
-              { label: "Front", src: p.coverImage.startsWith("/") ? `${API_BASE_URL}${p.coverImage}` : p.coverImage },
+              { label: "Front", src: getImageUrl(p.coverImage) },
               ...p.additionalImages.map((img: any) => ({
                 label: img.label || "Side",
-                src: img.url.startsWith("/") ? `${API_BASE_URL}${img.url}` : img.url
+                src: getImageUrl(img.url)
               }))
             ]
-            : [{ label: "Front", src: p.coverImage.startsWith("/") ? `${API_BASE_URL}${p.coverImage}` : p.coverImage }]
+            : [{ label: "Front", src: getImageUrl(p.coverImage) }]
         }));
         return { products: apiProducts };
       }
@@ -226,14 +226,15 @@ function ScrollBrandReveal({ collections }: { collections: any[] }) {
 
   const renderCard = (item: any, idx: number, isFlex: boolean) => {
     const targetTo = item.to || "/shop";
+    const itemTitle = item.title || "";
     const searchVal = item.search && (item.search.collection || item.search.category)
       ? item.search
-      : { collection: item.title.charAt(0).toUpperCase() + item.title.slice(1).toLowerCase() };
+      : { collection: itemTitle ? (itemTitle.charAt(0).toUpperCase() + itemTitle.slice(1).toLowerCase()) : "Sports" };
 
     const bgImg = item.bg || "";
     const getOptimizedUrl = (url: string) => {
-      if (!url) return url;
-      let finalUrl = url.startsWith("/") ? `${API_BASE_URL}${url}` : url;
+      if (!url) return "";
+      let finalUrl = getImageUrl(url);
       if (finalUrl.includes("unsplash.com")) {
         if (finalUrl.includes("w=")) {
           finalUrl = finalUrl.replace(/w=\d+/, "w=400").replace(/q=\d+/, "q=70");
@@ -262,6 +263,10 @@ function ScrollBrandReveal({ collections }: { collections: any[] }) {
               src={bgUrl}
               alt={item.title}
               loading="lazy"
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = "https://images.unsplash.com/photo-1517649763962-0c623066013b?q=70&auto=format&fit=crop&w=400";
+              }}
               className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
             />
           ) : null}
@@ -625,12 +630,12 @@ function Home() {
             <div className="absolute inset-0 h-full w-full">
               {categoriesBanners[0]?.bg ? (
                 <img
-                  src={
-                    categoriesBanners[0].bg.startsWith("/")
-                      ? `${API_BASE_URL}${categoriesBanners[0].bg}`
-                      : categoriesBanners[0].bg
-                  }
+                  src={getImageUrl(categoriesBanners[0].bg)}
                   alt={categoriesBanners[0].title}
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=1920";
+                  }}
                   className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105"
                 />
               ) : (
@@ -677,12 +682,12 @@ function Home() {
                 >
                   {cat.bg ? (
                     <img
-                      src={
-                        cat.bg.startsWith("/")
-                          ? `${API_BASE_URL}${cat.bg}`
-                          : cat.bg
-                      }
+                      src={getImageUrl(cat.bg)}
                       alt={cat.title}
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=800";
+                      }}
                       className="absolute inset-0 h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105"
                     />
                   ) : (

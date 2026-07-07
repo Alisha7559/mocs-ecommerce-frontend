@@ -5,6 +5,7 @@ import type { Product } from "@/lib/products";
 import { useStore } from "@/lib/store";
 import { ProductCard } from "@/components/ProductCard";
 import { Stagger } from "@/components/Reveal";
+import { getImageUrl } from "@/lib/utils";
 import { apiClient, API_BASE_URL } from "@/lib/api";
 
 export const Route = createFileRoute("/wishlist")({
@@ -40,7 +41,7 @@ function Wishlist() {
             rating: p.rating || 5,
             reviews: p.reviewCount || 0,
             stock: p.stock || 0,
-            image: p.coverImage.startsWith("/") ? `${API_BASE_URL}${p.coverImage}` : p.coverImage,
+            image: getImageUrl(p.coverImage),
             colors: p.colors && p.colors.length > 0
               ? p.colors.map((c: any) => ({ name: c.name, hex: c.hex }))
               : [{ name: "Default", hex: "#000000" }],

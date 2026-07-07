@@ -3,7 +3,7 @@ import { X, Plus, Trash2 } from "lucide-react";
 import { AdminDropdown } from "@/components/admin/AdminShell";
 import { apiClient, API_BASE_URL, getToken } from "@/lib/api";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn, getImageUrl } from "@/lib/utils";
 
 const colorList = [
   { name: "Black", hex: "#000000" },
@@ -453,7 +453,7 @@ export function ProductFormModal({
                           {shades[activeShadeIndex].coverImage && (
                             <div className="flex items-center gap-2 rounded-xl border border-border p-2 bg-background">
                               <img
-                                src={shades[activeShadeIndex].coverImage.startsWith("/") ? `${API_BASE_URL}${shades[activeShadeIndex].coverImage}` : shades[activeShadeIndex].coverImage}
+                                src={getImageUrl(shades[activeShadeIndex].coverImage)}
                                 className="h-8 w-8 object-cover rounded"
                               />
                               <span className="text-[10px] truncate max-w-[150px] font-medium text-muted-foreground">
@@ -554,7 +554,7 @@ export function ProductFormModal({
                             </div>
                             {img.url && (
                               <div className="flex items-center gap-2 rounded-lg border border-border/40 p-1 bg-background">
-                                <img src={img.url.startsWith("/") ? `${API_BASE_URL}${img.url}` : img.url} className="h-5 w-5 object-cover rounded" />
+                                <img src={getImageUrl(img.url)} className="h-5 w-5 object-cover rounded" />
                                 <span className="text-[9px] truncate text-muted-foreground flex-1">{img.url}</span>
                               </div>
                             )}

@@ -48,7 +48,7 @@ export const Route = createFileRoute("/product/$id")({
           rating: p.rating || 5,
           reviews: p.reviewCount || 0,
           stock: p.stock || 0,
-          image: p.coverImage.startsWith("/") ? `${API_BASE_URL}${p.coverImage}` : p.coverImage,
+          image: getImageUrl(p.coverImage),
           colors: p.colors && p.colors.length > 0
             ? p.colors.map((c: any) => ({ name: c.name, hex: c.hex }))
             : [{ name: "Default", hex: "#000000" }],
@@ -57,13 +57,13 @@ export const Route = createFileRoute("/product/$id")({
           isNew: p.isNew,
           views: p.additionalImages && p.additionalImages.length > 0
             ? [
-                { label: "Front", src: p.coverImage.startsWith("/") ? `${API_BASE_URL}${p.coverImage}` : p.coverImage },
+                { label: "Front", src: getImageUrl(p.coverImage) },
                 ...p.additionalImages.map((img: any) => ({
                   label: img.label || "Side",
-                  src: img.url.startsWith("/") ? `${API_BASE_URL}${img.url}` : img.url
+                  src: getImageUrl(img.url)
                 }))
               ]
-            : [{ label: "Front", src: p.coverImage.startsWith("/") ? `${API_BASE_URL}${p.coverImage}` : p.coverImage }]
+            : [{ label: "Front", src: getImageUrl(p.coverImage) }]
         };
         return { product: mappedProduct };
       }
@@ -136,7 +136,7 @@ function ProductDetail() {
               rating: p.rating || 5,
               reviews: p.reviewCount || 0,
               stock: p.stock || 0,
-              image: p.coverImage.startsWith("/") ? `${API_BASE_URL}${p.coverImage}` : p.coverImage,
+              image: getImageUrl(p.coverImage),
               colors: p.colors && p.colors.length > 0
                 ? p.colors.map((c: any) => ({ name: c.name, hex: c.hex }))
                 : [{ name: "Default", hex: "#000000" }],
@@ -167,7 +167,7 @@ function ProductDetail() {
             rating: p.rating || 5,
             reviews: p.reviewCount || 0,
             stock: p.stock || 0,
-            image: p.coverImage.startsWith("/") ? `${API_BASE_URL}${p.coverImage}` : p.coverImage,
+            image: getImageUrl(p.coverImage),
             colors: p.colors && p.colors.length > 0
               ? p.colors.map((c: any) => ({ name: c.name, hex: c.hex }))
               : [{ name: "Default", hex: "#000000" }],
@@ -379,6 +379,10 @@ function ProductDetail() {
                 key={active}
                 src={getImageUrl(gallery[active].src)}
                 alt={`${product.name} — ${gallery[active].label}`}
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=600";
+                }}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -409,7 +413,15 @@ function ProductDetail() {
                   active === i ? "border-primary" : "border-transparent hover:border-border",
                 )}
               >
-                <img src={getImageUrl(view.src)} alt={view.label} className="h-full w-full object-cover" />
+                <img
+                  src={getImageUrl(view.src)}
+                  alt={view.label}
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=300";
+                  }}
+                  className="h-full w-full object-cover"
+                />
                 <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/90 to-transparent py-1 text-center text-[10px] font-semibold uppercase tracking-wide">
                   {view.label}
                 </span>

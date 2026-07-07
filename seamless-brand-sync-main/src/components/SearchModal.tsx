@@ -34,7 +34,7 @@ export function SearchModal() {
               rating: p.rating || 5,
               reviews: p.reviewCount || 0,
               stock: p.stock || 0,
-              image: p.coverImage.startsWith("/") ? `${API_BASE_URL}${p.coverImage}` : p.coverImage,
+              image: getImageUrl(p.coverImage),
               colors: p.colors && p.colors.length > 0
                 ? p.colors.map((c: any) => ({ name: c.name, hex: c.hex }))
                 : [{ name: "Default", hex: "#000000" }],
