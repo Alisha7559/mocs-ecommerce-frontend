@@ -112,10 +112,10 @@ export function Hero() {
             src={current.bg}
             alt={current.title}
 
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "-100%" }}
-            transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
+            initial={{ opacity: 0, scale: 1.15 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
             className={cn(
               "absolute inset-0 w-full h-full object-cover select-none pointer-events-none",
               current.mobileFocus === "right"
