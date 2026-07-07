@@ -106,16 +106,21 @@ export const apiClient = {
     listAll: (q = "") => api<any[]>(`/api/orders/all${q ? `?${q}` : ""}`),
     create: (body: unknown) =>
       api<any>("/api/orders", { method: "POST", body: JSON.stringify(body) }),
-    updateStatus: (id: string, status: string) =>
-      api<any>(`/api/orders/${id}`, {
-        method: "PUT",
-        body: JSON.stringify({ status }),
+    updateStatus: (id: string, status: string, note?: string) =>
+      api<any>(`/api/orders/${id}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status, note }),
+      }),
+    updatePaymentStatus: (id: string, paymentStatus: string) =>
+      api<any>(`/api/orders/${id}/payment-status`, {
+        method: "PATCH",
+        body: JSON.stringify({ paymentStatus }),
       }),
     delete: (id: string) => api<any>(`/api/orders/${id}`, { method: "DELETE" }),
     restore: (id: string) => api<any>(`/api/orders/${id}/restore`, { method: "POST" }),
     cancel: (id: string, reason: string) =>
       api<any>(`/api/orders/${id}/cancel`, {
-        method: "PUT",
+        method: "PATCH",
         body: JSON.stringify({ reason }),
       }),
     returnOrder: (id: string, reason: string) =>

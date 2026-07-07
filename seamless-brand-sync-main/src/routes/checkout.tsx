@@ -27,6 +27,41 @@ function loadRazorpay(): Promise<boolean> {
   });
 }
 
+const indianStates = [
+  "Andhra Pradesh",
+  "Arunachal Pradesh",
+  "Assam",
+  "Bihar",
+  "Chhattisgarh",
+  "Goa",
+  "Gujarat",
+  "Haryana",
+  "Himachal Pradesh",
+  "Jharkhand",
+  "Karnataka",
+  "Kerala",
+  "Madhya Pradesh",
+  "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Tamil Nadu",
+  "Telangana",
+  "Tripura",
+  "Uttar Pradesh",
+  "Uttarakhand",
+  "West Bengal",
+  "Delhi",
+  "Puducherry",
+  "Jammu & Kashmir",
+  "Ladakh"
+];
+
 export const Route = createFileRoute("/checkout")({
   head: () => ({
     meta: [
@@ -38,13 +73,70 @@ export const Route = createFileRoute("/checkout")({
 });
 function Checkout() {
   const navigate = useNavigate();
-  const { cart, cartTotal, clearCart, user } = useStore();
+  const { cart, cartTotal, clearCart, user, setUser } = useStore();
   const [paying, setPaying] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"card" | "upi" | "netbanking" | "cod">("netbanking");
   const [tempAddress, setTempAddress] = useState<any>(null);
   const [tempEmail, setTempEmail] = useState("");
   const shipping = cart.reduce((sum, item) => sum + ((item.product as any).shippingCharge || 0) * item.qty, 0);
   const total = cartTotal + shipping;
+
+  // Form fields controlled state
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [addressVal, setAddressVal] = useState("");
+  const [cityVal, setCityVal] = useState("");
+  const [stateVal, setStateVal] = useState("");
+  const [postalVal, setPostalVal] = useState("");
+
+  useEffect(() => {
+    if (user) {
+      setFirstName(user.name ? user.name.split(" ")[0] : "");
+      setLastName(user.name ? user.name.split(" ").slice(1).join(" ") : "");
+      setEmail(user.email || "");
+      setPhone(user.phone || "");
+
+      // Parse address format: "line1, city, state, postal, country"
+      if (user.address && typeof user.address === "string") {
+        const parts = user.address.split(",").map((s: string) => s.trim());
+        if (parts.length >= 4) {
+          const countryIdx = parts.findIndex((p: string) => p.toLowerCase() === "india");
+          let postal = "";
+          let state = "";
+          let city = "";
+          let line1 = "";
+
+          if (countryIdx !== -1) {
+            postal = parts[countryIdx - 1] || "";
+            state = parts[countryIdx - 2] || "";
+            city = parts[countryIdx - 3] || "";
+            line1 = parts.slice(0, countryIdx - 3).join(", ");
+          } else {
+            postal = parts[parts.length - 1];
+            state = parts[parts.length - 2];
+            city = parts[parts.length - 3];
+            line1 = parts.slice(0, parts.length - 3).join(", ");
+          }
+          setAddressVal(line1);
+          setCityVal(city);
+          setStateVal(state);
+          setPostalVal(postal);
+        } else if (parts.length === 3) {
+          setAddressVal(parts[0]);
+          setCityVal(parts[1]);
+          setPostalVal(parts[2]);
+          setStateVal("");
+        } else {
+          setAddressVal(user.address);
+          setCityVal("");
+          setPostalVal("");
+          setStateVal("");
+        }
+      }
+    }
+  }, [user]);
 
   useEffect(() => {
     if (!isAuthed()) navigate({ to: "/auth", search: { redirect: "/checkout" } });
@@ -60,16 +152,40 @@ function Checkout() {
     const fd = new FormData(form);
 
     const shippingAddress = {
+      name: `${fd.get("first") ?? ""} ${fd.get("last") ?? ""}`.trim(),
       fullName: `${fd.get("first") ?? ""} ${fd.get("last") ?? ""}`.trim(),
+      phone: String(fd.get("phone") ?? ""),
+      email: String(fd.get("email") ?? ""),
+      address: String(fd.get("address") ?? ""),
       line1: String(fd.get("address") ?? ""),
       city: String(fd.get("city") ?? ""),
+      state: String(fd.get("state") ?? ""),
+      pincode: String(fd.get("postal") ?? ""),
       postalCode: String(fd.get("postal") ?? ""),
       country: "India",
     };
 
     setTempAddress(shippingAddress);
-    setTempEmail(String(fd.get("email") ?? ""));
-    handleSelectPaymentOption(paymentMethod, shippingAddress, String(fd.get("email") ?? ""));
+    setTempEmail(shippingAddress.email);
+
+    // Sync profile phone and address back to backend user
+    const addressStr = `${shippingAddress.address}, ${shippingAddress.city}, ${shippingAddress.state}, ${shippingAddress.pincode}, ${shippingAddress.country}`;
+    apiClient.users
+      .updateProfile({
+        name: shippingAddress.name,
+        phone: shippingAddress.phone,
+        address: addressStr,
+      })
+      .then((updatedUser) => {
+        if (updatedUser) {
+          setUser(updatedUser);
+        }
+      })
+      .catch((err) => {
+        console.warn("Failed to auto-update profile on checkout", err);
+      });
+
+    handleSelectPaymentOption(paymentMethod, shippingAddress, shippingAddress.email);
   };
 
   const handleSelectPaymentOption = async (
@@ -212,14 +328,16 @@ function Checkout() {
                 name="first"
                 required
                 placeholder="First name"
-                defaultValue={user?.name ? user.name.split(" ")[0] : ""}
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
                 className="input-field"
               />
               <input
                 name="last"
                 required
                 placeholder="Last name"
-                defaultValue={user?.name ? user.name.split(" ").slice(1).join(" ") : ""}
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
                 className="input-field"
               />
               <input
@@ -227,7 +345,8 @@ function Checkout() {
                 required
                 type="email"
                 placeholder="Email"
-                defaultValue={user?.email || ""}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="input-field sm:col-span-2"
               />
               <input
@@ -235,7 +354,7 @@ function Checkout() {
                 required
                 type="tel"
                 placeholder="Phone number"
-                defaultValue={user?.phone || ""}
+                value={phone}
                 maxLength={10}
                 onKeyPress={(e) => {
                   if (!/[0-9]/.test(e.key)) {
@@ -243,20 +362,52 @@ function Checkout() {
                   }
                 }}
                 onChange={(e) => {
-                  e.target.value = e.target.value.replace(/[^0-9]/g, "").slice(0, 10);
+                  setPhone(e.target.value.replace(/[^0-9]/g, "").slice(0, 10));
                 }}
                 className="input-field sm:col-span-2"
               />
-              <input name="address" required placeholder="Address" className="input-field sm:col-span-2" />
-              <input name="city" required placeholder="City" className="input-field" />
+              <input
+                name="address"
+                required
+                placeholder="Address"
+                value={addressVal}
+                onChange={(e) => setAddressVal(e.target.value)}
+                className="input-field sm:col-span-2"
+              />
+              <input
+                name="city"
+                required
+                placeholder="City"
+                value={cityVal}
+                onChange={(e) => setCityVal(e.target.value)}
+                className="input-field"
+              />
+              <select
+                name="state"
+                required
+                value={stateVal}
+                onChange={(e) => setStateVal(e.target.value)}
+                className="input-field cursor-pointer bg-card text-foreground"
+              >
+                <option value="">Select State</option>
+                {indianStates.map((st) => (
+                  <option key={st} value={st}>
+                    {st}
+                  </option>
+                ))}
+              </select>
               <input
                 name="postal"
                 required
                 placeholder="Postal code"
+                value={postalVal}
                 onKeyPress={(e) => {
                   if (!/[0-9]/.test(e.key)) {
                     e.preventDefault();
                   }
+                }}
+                onChange={(e) => {
+                  setPostalVal(e.target.value.replace(/[^0-9]/g, ""));
                 }}
                 className="input-field"
               />

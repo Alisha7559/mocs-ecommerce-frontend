@@ -25,6 +25,15 @@ const statusStyles: Record<string, string> = {
   cancelled: "bg-red-500/10 text-red-600 border border-red-500/20",
   return_requested: "bg-purple-500/10 text-purple-600 border border-purple-500/20",
   returned: "bg-indigo-500/10 text-indigo-600 border border-indigo-500/20",
+  
+  Placed: "bg-amber-500/10 text-amber-600 border border-amber-500/20",
+  Confirmed: "bg-sky-500/10 text-sky-600 border border-sky-500/20",
+  Processing: "bg-blue-500/10 text-blue-600 border border-blue-500/20",
+  Shipped: "bg-indigo-500/10 text-indigo-600 border border-indigo-500/20",
+  "Out for Delivery": "bg-purple-500/10 text-purple-600 border border-purple-500/20",
+  Delivered: "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20",
+  Cancelled: "bg-red-500/10 text-red-600 border border-red-500/20",
+  Returned: "bg-stone-500/10 text-stone-600 border border-stone-500/20",
 };
 
 function FancyDropdown({
@@ -361,15 +370,15 @@ function OrdersPage() {
                           <td className="whitespace-nowrap px-6 py-4.5">
                             <span className={cn(
                               "inline-block rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider",
-                              statusStyles[order.status] || "bg-stone-100 text-stone-500 border border-stone-200"
+                              statusStyles[order.orderStatus || order.status] || "bg-stone-100 text-stone-500 border border-stone-200"
                             )}>
-                              {order.status.replace("_", " ")}
+                              {(order.orderStatus || order.status).replace("_", " ")}
                             </span>
                           </td>
 
                           {/* Detail Trigger Action */}
                           <td className="whitespace-nowrap px-6 py-4.5 text-right flex items-center justify-end gap-2">
-                            {order.status === "delivered" && (
+                            {(order.orderStatus || order.status) === "delivered" && (
                               <button
                                 type="button"
                                 onClick={() => {
@@ -478,10 +487,14 @@ function OrdersPage() {
                   <h4 className="font-display text-xs font-black uppercase tracking-wider text-stone-500 flex items-center gap-1.5">
                     <MapPin className="h-3.5 w-3.5" /> Shipping Address
                   </h4>
-                  <p className="text-xs font-bold text-stone-850 leading-relaxed">
-                    {selectedOrder.shippingAddress?.fullName}<br />
-                    {selectedOrder.shippingAddress?.line1}<br />
-                    {selectedOrder.shippingAddress?.city}, {selectedOrder.shippingAddress?.postalCode}
+                  <p className="text-xs font-bold text-stone-850 leading-relaxed text-left">
+                    {selectedOrder.shippingAddress?.name || selectedOrder.shippingAddress?.fullName}<br />
+                    {selectedOrder.shippingAddress?.address || selectedOrder.shippingAddress?.line1}<br />
+                    {selectedOrder.shippingAddress?.city}
+                    {selectedOrder.shippingAddress?.state ? `, ${selectedOrder.shippingAddress?.state}` : ""}
+                    {selectedOrder.shippingAddress?.pincode ? ` - ${selectedOrder.shippingAddress?.pincode}` : selectedOrder.shippingAddress?.postalCode ? ` - ${selectedOrder.shippingAddress?.postalCode}` : ""}
+                    {selectedOrder.shippingAddress?.phone && <><br />Phone: {selectedOrder.shippingAddress.phone}</>}
+                    {selectedOrder.shippingAddress?.email && <><br />Email: {selectedOrder.shippingAddress.email}</>}
                   </p>
                 </div>
                 <div className="rounded-2xl border border-stone-150 bg-stone-50/50 p-4 space-y-2">
@@ -490,15 +503,38 @@ function OrdersPage() {
                   </h4>
                   <div className="text-xs space-y-1">
                     <p className="flex justify-between font-medium text-stone-500">Method: <span className="font-bold text-stone-900 uppercase">{selectedOrder.paymentMethod}</span></p>
-                    <p className="flex justify-between font-medium text-stone-500">Status: <span className="font-bold text-stone-900 uppercase">{selectedOrder.paymentStatus}</span></p>
+                    <p className="flex justify-between font-medium text-stone-500">Payment Status: <span className="font-bold text-stone-900 uppercase">{selectedOrder.paymentStatus}</span></p>
+                    <p className="flex justify-between font-medium text-stone-500">Order Status: <span className="font-bold text-stone-900 uppercase">{selectedOrder.orderStatus || selectedOrder.status}</span></p>
+                    {selectedOrder.transactionId && (
+                      <p className="flex justify-between font-medium text-stone-500 truncate max-w-full">Txn ID: <span className="font-semibold text-stone-800 text-[10px]">{selectedOrder.transactionId}</span></p>
+                    )}
                     <p className="flex justify-between font-medium text-stone-500 border-t border-stone-200/80 pt-1 mt-1 font-display text-sm font-extrabold text-stone-900">Total: <span>₹{selectedOrder.total}</span></p>
                   </div>
                 </div>
               </div>
+
+              {/* Status History Timeline */}
+              {selectedOrder.statusHistory && selectedOrder.statusHistory.length > 0 && (
+                <div className="space-y-3 pt-2">
+                  <h4 className="font-display text-xs font-black uppercase tracking-wider text-primary">Order Status Timeline</h4>
+                  <div className="relative border-l-2 border-stone-200 pl-4 space-y-3 text-left">
+                    {selectedOrder.statusHistory.map((history: any, index: number) => (
+                      <div key={index} className="relative">
+                        <span className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-primary border-2 border-white" />
+                        <p className="text-xs font-bold text-stone-900">{history.status}</p>
+                        {history.note && <p className="text-[11px] text-stone-500 mt-0.5">{history.note}</p>}
+                        <p className="text-[9px] text-stone-400 mt-0.5">
+                          {new Date(history.updatedAt).toLocaleString()}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="mt-8 flex justify-end gap-3 border-t border-stone-100 pt-4">
-              {selectedOrder.status === "pending" && (
+              {["Placed", "Confirmed", "Processing", "pending", "paid"].includes(selectedOrder.orderStatus || selectedOrder.status) && (
                 <button
                   onClick={() => {
                     setCancelOrderId(selectedOrder._id);
@@ -509,7 +545,7 @@ function OrdersPage() {
                   Cancel Order
                 </button>
               )}
-              {selectedOrder.status === "delivered" && (
+              {["Delivered", "delivered"].includes(selectedOrder.orderStatus || selectedOrder.status) && (
                 <button
                   onClick={() => {
                     setReturnOrderId(selectedOrder._id);

@@ -18,7 +18,7 @@ export const Route = createFileRoute("/profile")({
 
 function ProfilePage() {
   const navigate = useNavigate();
-  const { logout } = useStore();
+  const { logout, setUser } = useStore();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   
@@ -67,6 +67,7 @@ function ProfilePage() {
     try {
       const updated = await apiClient.users.updateProfile({ name, phone, address });
       setProfile((prev: any) => ({ ...prev, ...updated }));
+      setUser(updated);
       toast.success("Profile details updated successfully");
     } catch (err: any) {
       toast.error(err?.message || "Failed to update profile");
