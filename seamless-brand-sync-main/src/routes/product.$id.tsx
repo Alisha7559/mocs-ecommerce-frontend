@@ -262,6 +262,7 @@ function ProductDetail() {
       days: number;
       color: string;
       verified: boolean;
+      size?: number | null;
     }[]
   >([]);
   const [rvName, setRvName] = useState("");
@@ -288,7 +289,8 @@ function ProductDetail() {
             text: r.comment || r.text || "",
             days: Math.round((Date.now() - new Date(r.createdAt).getTime()) / (1000 * 60 * 60 * 24)) || 0,
             color: r.color || "Default",
-            verified: r.isVerifiedPurchase || false
+            verified: r.isVerifiedPurchase || false,
+            size: r.size || null
           }));
           setUserReviews(mapped);
         }
@@ -589,52 +591,35 @@ function ProductDetail() {
             <p className="text-sm text-muted-foreground">No reviews yet.</p>
           </div>
         ) : (
-          <div className="relative flex items-center justify-between gap-4 max-w-lg mx-auto py-4">
-            {reviews.length > 1 && (
-              <button
-                onClick={prevReview}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-card text-muted-foreground hover:border-primary hover:text-primary cursor-pointer transition"
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl py-4 text-left">
+            {reviews.map((review, idx) => (
+              <div
+                key={idx}
+                className="rounded-2xl border border-border bg-card p-5 shadow-soft w-full text-left flex flex-col justify-between"
               >
-                <ChevronLeft className="h-5 w-5" />
-              </button>
-            )}
-            
-            <div className="flex-1 overflow-hidden min-h-[160px] flex items-center justify-center">
-              <motion.div
-                key={currentReviewIndex}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="rounded-2xl border border-border bg-card p-6 shadow-soft w-full text-left"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex gap-0.5">
-                    {Array.from({ length: reviews[currentReviewIndex].rating }).map((_, i) => (
-                      <Star key={i} className="h-3.5 w-3.5 fill-primary text-primary" />
-                    ))}
+                <div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex gap-0.5">
+                      {Array.from({ length: review.rating }).map((_, i) => (
+                        <Star key={i} className="h-3.5 w-3.5 fill-primary text-primary" />
+                      ))}
+                    </div>
+                    {review.verified && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-semibold text-success">
+                        <Check className="h-3 w-3" /> Verified
+                      </span>
+                    )}
                   </div>
-                  {reviews[currentReviewIndex].verified && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-semibold text-success">
-                      <Check className="h-3 w-3" /> Verified
-                    </span>
-                  )}
+                  <p className="mt-3 text-sm text-stone-600 font-medium">"{review.text}"</p>
                 </div>
-                <p className="mt-3 text-sm text-muted-foreground">"{reviews[currentReviewIndex].text}"</p>
-                <p className="mt-4 text-sm font-semibold">{reviews[currentReviewIndex].name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {reviews[currentReviewIndex].days} days ago · {reviews[currentReviewIndex].color}
-                </p>
-              </motion.div>
-            </div>
-            
-            {reviews.length > 1 && (
-              <button
-                onClick={nextReview}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-card text-muted-foreground hover:border-primary hover:text-primary cursor-pointer transition"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </button>
-            )}
+                <div className="mt-4 pt-3 border-t border-stone-100">
+                  <p className="text-xs font-bold text-stone-900">{review.name}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    {review.days} days ago {review.color ? `· ${review.color}` : ""}{review.size ? ` · Size ${review.size}` : ""}
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </section>

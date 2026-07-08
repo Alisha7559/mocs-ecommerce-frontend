@@ -179,6 +179,10 @@ export const apiClient = {
       }),
     list: (q = "") => api<any>(`/api/payments${q ? `?${q}` : ""}`),
     getStats: () => api<any>("/api/payments/stats"),
+    cancel: (orderId: string) =>
+      api<any>(`/api/payments/${orderId}/cancel`, {
+        method: "POST",
+      }),
   },
   reviews: {
     list: (productId: string) => api<any[]>(`/api/reviews/${productId}`),

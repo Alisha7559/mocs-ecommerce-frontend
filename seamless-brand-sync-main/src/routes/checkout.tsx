@@ -199,7 +199,6 @@ function Checkout() {
 
     if (method === "cod") {
       try {
-        toast.loading("Placing your Cash on Delivery order...", { id: "place-order" });
         const orderInfo = await apiClient.orders.create({
           shippingAddress: finalAddress,
           paymentMethod: "cod",
@@ -210,7 +209,6 @@ function Checkout() {
             color: i.color,
           })),
         });
-        toast.success("Order Placed Successfully!", { id: "place-order" });
         clearCart();
         navigate({
           to: "/payment-success",
@@ -220,7 +218,7 @@ function Checkout() {
           },
         });
       } catch (err: any) {
-        toast.error(err?.message || "Failed to place Cash on Delivery order", { id: "place-order" });
+        toast.error(err?.message || "Failed to place Cash on Delivery order");
       } finally {
         setPaying(false);
       }
@@ -280,7 +278,6 @@ function Checkout() {
               internalOrderId: orderInfo.internalOrderId,
             });
 
-            toast.success("Payment verified successfully!");
             clearCart();
             navigate({
               to: "/payment-success",
@@ -303,9 +300,16 @@ function Checkout() {
           }
         },
         modal: {
-          ondismiss: () => {
+          ondismiss: async () => {
             setPaying(false);
             toast.error("Payment cancelled");
+            if (orderInfo && orderInfo.internalOrderId) {
+              try {
+                await apiClient.payments.cancel(orderInfo.internalOrderId);
+              } catch (e) {
+                console.warn("Failed to mark payment as cancelled/failed on backend:", e);
+              }
+            }
           },
         },
       });
@@ -493,7 +497,7 @@ function Checkout() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">{item.product.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    US {item.size} · Qty {item.qty}
+                    Size {item.size} · Qty {item.qty}
                   </p>
                 </div>
                 <span className="text-sm font-bold">₹{item.product.price * item.qty}</span>

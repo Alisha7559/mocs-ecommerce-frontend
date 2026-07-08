@@ -11,6 +11,7 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 import { Toaster } from "sonner";
+import { ClerkProvider } from "@clerk/clerk-react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -135,30 +136,42 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+const CLERK_PUBLISHABLE_KEY = (import.meta as any).env?.VITE_CLERK_PUBLISHABLE_KEY;
+const isClerkEnabled = !!CLERK_PUBLISHABLE_KEY && CLERK_PUBLISHABLE_KEY !== "pk_test_ZmFrZS1jbGVyay1rZXktNTAuY2xlcmsuYWNjb3VudHMuZGV2JA==";
+
 const queryClient = new QueryClient();
 
 function RootComponent() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isHome = pathname === "/";
+  const isAuthPage = pathname === "/auth";
 
-  return (
+  const renderContent = () => (
     <QueryClientProvider client={queryClient}>
       <StoreProvider>
         <ScrollRestoration />
         <Navbar />
-        <main className={isHome ? "" : "pt-16"}>
+        <main className={isHome ? "" : isAuthPage ? "pt-14 sm:pt-16" : "pt-16"}>
           {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
           <Outlet />
         </main>
-        <Footer />
-        <AnnouncementBar />
+        {!isAuthPage && <Footer />}
+        {!isAuthPage && <AnnouncementBar />}
         <MobileNav />
         <CartDrawer />
         <SearchModal />
-        <ScrollTagline />
-        <Toaster position="top-right" richColors closeButton duration={3000} />
-        <div className="h-14 lg:hidden" />
+        {!isAuthPage && <ScrollTagline />}
+        <Toaster position="top-right" richColors closeButton duration={3000} visibleToasts={1} />
+        {!isAuthPage && <div className="h-14 lg:hidden" />}
       </StoreProvider>
     </QueryClientProvider>
+  );
+
+  return isClerkEnabled ? (
+    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
+      {renderContent()}
+    </ClerkProvider>
+  ) : (
+    renderContent()
   );
 }

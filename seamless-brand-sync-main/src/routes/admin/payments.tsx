@@ -171,13 +171,13 @@ function AdminPayments() {
                     </td>
                     <td className="p-4">
                       <span className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                        o.paymentStatus === "paid"
+                        o.paymentStatus?.toLowerCase() === "paid"
                           ? "bg-success/10 text-success"
-                          : o.paymentStatus === "failed"
+                          : ["failed", "cancelled"].includes(o.paymentStatus?.toLowerCase() || "")
                             ? "bg-destructive/10 text-destructive"
                             : "bg-amber-500/10 text-amber-500"
                       }`}>
-                        {o.paymentStatus}
+                        {["failed", "cancelled"].includes(o.paymentStatus?.toLowerCase() || "") ? "failed" : o.paymentStatus}
                       </span>
                     </td>
                     <td className="p-4 text-right font-display font-bold text-foreground">

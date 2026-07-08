@@ -1,3 +1,4 @@
+import { clerkMiddleware } from "@clerk/tanstack-react-start/server";
 import { createStart, createMiddleware } from "@tanstack/react-start";
 
 import { renderErrorPage } from "./lib/error-page";

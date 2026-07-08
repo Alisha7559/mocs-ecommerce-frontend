@@ -36,6 +36,15 @@ const statusStyles: Record<string, string> = {
   Returned: "bg-stone-500/10 text-stone-600 border border-stone-500/20",
 };
 
+const isItemRefundedOrReturned = (item: any, order: any) => {
+  if (!order) return false;
+  const hasReturnStatus = order.orderStatus === "Returned" || order.status === "returned" || order.paymentStatus === "Refunded" || order.paymentStatus === "refunded";
+  if (!hasReturnStatus && !order.returnReason) return false;
+  if (order.items?.length === 1) return true;
+  const reason = (order.returnReason || "").toLowerCase();
+  return reason.includes(item.name.toLowerCase());
+};
+
 function FancyDropdown({
   value,
   onChange,
@@ -119,6 +128,7 @@ function OrdersPage() {
   const [returnModal, setReturnModal] = useState(false);
   const [returnOrderId, setReturnOrderId] = useState("");
   const [returnReason, setReturnReason] = useState("");
+  const [returnItems, setReturnItems] = useState<string[]>([]);
 
   const [reviewModal, setReviewModal] = useState(false);
   const [reviewProduct, setReviewProduct] = useState("");
@@ -126,6 +136,7 @@ function OrdersPage() {
   const [reviewColor, setReviewColor] = useState("Default");
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewText, setReviewText] = useState("");
+  const [reviewSize, setReviewSize] = useState<number | null>(null);
 
   const fetchOrders = async () => {
     try {
@@ -168,11 +179,26 @@ function OrdersPage() {
 
   const handleReturnOrder = async () => {
     if (!returnOrderId) return;
+    if (selectedOrder && selectedOrder.items?.length > 1 && returnItems.length === 0) {
+      toast.error("Please select at least one item to return", { id: "auth-toast" });
+      return;
+    }
     try {
-      await apiClient.orders.returnOrder(returnOrderId, returnReason);
+      let finalReason = returnReason;
+      if (selectedOrder && selectedOrder.items?.length > 1) {
+        const selectedDetails = selectedOrder.items
+          .filter((item: any) => {
+            const key = `${item.product?.id || item.product}_${item.size}_${item.color}`;
+            return returnItems.includes(key);
+          })
+          .map((item: any) => `${item.name} (Size ${item.size}, ${item.color})`);
+        finalReason = `[Returned Items: ${selectedDetails.join(", ")}] — Reason: ${returnReason}`;
+      }
+      await apiClient.orders.returnOrder(returnOrderId, finalReason);
       toast.success("Return request submitted successfully");
       setReturnModal(false);
       setReturnReason("");
+      setReturnItems([]);
       setDetailModalOpen(false);
       fetchOrders();
     } catch (err: any) {
@@ -188,6 +214,7 @@ function OrdersPage() {
         rating: reviewRating,
         text: reviewText,
         color: reviewColor,
+        size: reviewSize || undefined,
       });
       toast.success("Review submitted successfully!");
       setReviewModal(false);
@@ -378,24 +405,43 @@ function OrdersPage() {
 
                           {/* Detail Trigger Action */}
                           <td className="whitespace-nowrap px-6 py-4.5 text-right flex items-center justify-end gap-2">
-                            {(order.orderStatus || order.status) === "delivered" && (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const firstItem = order.items?.[0];
-                                  if (firstItem) {
-                                    setReviewProduct(firstItem.product);
-                                    setReviewOrder(order._id);
-                                    setReviewColor(firstItem.color || "Default");
-                                    setReviewRating(5);
-                                    setReviewText("");
-                                    setReviewModal(true);
-                                  }
-                                }}
-                                className="rounded-full bg-primary/10 border border-primary/20 px-4 py-1.5 text-xs font-bold uppercase tracking-wider hover:bg-primary hover:text-white hover:border-primary transition text-primary cursor-pointer shadow-sm"
-                              >
-                                Review
-                              </button>
+                            {["Delivered", "delivered"].includes(order.orderStatus || order.status) && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (order.items && order.items.length === 1) {
+                                      const firstItem = order.items[0];
+                                      setReviewProduct(firstItem.product);
+                                      setReviewOrder(order._id);
+                                      setReviewColor(firstItem.color || "Default");
+                                      setReviewSize(firstItem.size || null);
+                                      setReviewRating(5);
+                                      setReviewText("");
+                                      setReviewModal(true);
+                                    } else {
+                                      setSelectedOrder(order);
+                                      setDetailModalOpen(true);
+                                      toast.info("Please click 'Review' next to the product you want to review in the list.", { id: "auth-toast" });
+                                    }
+                                  }}
+                                  className="rounded-full bg-primary/10 border border-primary/20 px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider hover:bg-primary hover:text-white hover:border-primary transition text-primary cursor-pointer shadow-sm"
+                                >
+                                  Review
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedOrder(order);
+                                    setReturnOrderId(order._id);
+                                    setReturnItems([]);
+                                    setReturnModal(true);
+                                  }}
+                                  className="rounded-full bg-purple-50 border border-purple-200 px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider hover:bg-purple-100 hover:text-purple-700 transition text-purple-600 cursor-pointer shadow-sm"
+                                >
+                                  Return
+                                </button>
+                              </>
                             )}
                             <button
                               type="button"
@@ -456,16 +502,24 @@ function OrdersPage() {
                       />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-bold text-stone-900">{item.name}</p>
-                        <p className="text-[10px] text-stone-500 mt-0.5">US {item.size} · Color: {item.color} · Qty {item.qty}</p>
+                        <div className="flex flex-wrap items-center gap-2 mt-0.5">
+                          <span className="text-[10px] text-stone-500 font-medium">Size {item.size} · Color: {item.color} · Qty {item.qty}</span>
+                          {isItemRefundedOrReturned(item, selectedOrder) && (
+                            <span className="text-[9px] font-extrabold uppercase tracking-widest text-purple-650 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-150 shrink-0">
+                              Refunded / Returned
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <div className="flex items-center gap-4">
                         <span className="font-semibold text-sm text-stone-900">₹{item.price * item.qty}</span>
-                        {selectedOrder.status === "delivered" && (
+                        {["Delivered", "delivered"].includes(selectedOrder.orderStatus || selectedOrder.status) && (
                           <button
                             onClick={() => {
                               setReviewProduct(item.product);
                               setReviewOrder(selectedOrder._id);
                               setReviewColor(item.color || "Default");
+                              setReviewSize(item.size || null);
                               setReviewRating(5);
                               setReviewText("");
                               setReviewModal(true);
@@ -503,7 +557,7 @@ function OrdersPage() {
                   </h4>
                   <div className="text-xs space-y-1">
                     <p className="flex justify-between font-medium text-stone-500">Method: <span className="font-bold text-stone-900 uppercase">{selectedOrder.paymentMethod}</span></p>
-                    <p className="flex justify-between font-medium text-stone-500">Payment Status: <span className="font-bold text-stone-900 uppercase">{selectedOrder.paymentStatus}</span></p>
+                     <p className="flex justify-between font-medium text-stone-500">Payment Status: <span className="font-bold text-stone-900 uppercase">{selectedOrder.paymentStatus?.toLowerCase() === "cancelled" ? "FAILED" : selectedOrder.paymentStatus}</span></p>
                     <p className="flex justify-between font-medium text-stone-500">Order Status: <span className="font-bold text-stone-900 uppercase">{selectedOrder.orderStatus || selectedOrder.status}</span></p>
                     {selectedOrder.transactionId && (
                       <p className="flex justify-between font-medium text-stone-500 truncate max-w-full">Txn ID: <span className="font-semibold text-stone-800 text-[10px]">{selectedOrder.transactionId}</span></p>
@@ -515,19 +569,82 @@ function OrdersPage() {
 
               {/* Status History Timeline */}
               {selectedOrder.statusHistory && selectedOrder.statusHistory.length > 0 && (
-                <div className="space-y-3 pt-2">
-                  <h4 className="font-display text-xs font-black uppercase tracking-wider text-primary">Order Status Timeline</h4>
-                  <div className="relative border-l-2 border-stone-200 pl-4 space-y-3 text-left">
-                    {selectedOrder.statusHistory.map((history: any, index: number) => (
-                      <div key={index} className="relative">
-                        <span className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-primary border-2 border-white" />
-                        <p className="text-xs font-bold text-stone-900">{history.status}</p>
-                        {history.note && <p className="text-[11px] text-stone-500 mt-0.5">{history.note}</p>}
-                        <p className="text-[9px] text-stone-400 mt-0.5">
-                          {new Date(history.updatedAt).toLocaleString()}
-                        </p>
-                      </div>
-                    ))}
+                <div className="space-y-4 border-t border-stone-100 pt-6">
+                  <h4 className="font-display text-xs font-black uppercase tracking-widest text-primary text-left">
+                    Order Status Tracker
+                  </h4>
+                  
+                  {/* Stepper Grid Container */}
+                  <div className="relative flex items-center justify-between px-2 pt-2 pb-8 select-none">
+                    {/* Connecting Line Background */}
+                    <div className="absolute left-8 right-8 top-6 h-0.5 bg-stone-150 -translate-y-1/2" />
+                    
+                    {/* Connecting Line Active Fill */}
+                    <div 
+                      className="absolute left-8 top-6 h-0.5 bg-emerald-500 -translate-y-1/2 transition-all duration-500" 
+                      style={{ 
+                        width: `${
+                          (() => {
+                            const steps = ["Placed", "Confirmed", "Processing", "Shipped", "Out for Delivery", "Delivered"];
+                            const currentStatus = selectedOrder.orderStatus || selectedOrder.status || "Placed";
+                            const index = steps.findIndex(s => s.toLowerCase() === currentStatus.toLowerCase());
+                            const clampedIndex = index >= 0 ? index : 0;
+                            return clampedIndex >= steps.length - 1 ? 100 : (clampedIndex / (steps.length - 1)) * 100;
+                          })()
+                        }%`,
+                        maxWidth: "calc(100% - 4rem)"
+                      }}
+                    />
+
+                    {(() => {
+                      const steps = ["Placed", "Confirmed", "Processing", "Shipped", "Out for Delivery", "Delivered"];
+                      const currentStatus = selectedOrder.orderStatus || selectedOrder.status || "Placed";
+                      const currentStepIndex = steps.findIndex(s => s.toLowerCase() === currentStatus.toLowerCase());
+                      const clampedStepIndex = currentStepIndex >= 0 ? currentStepIndex : 0;
+                      
+                      const getStatusDate = (statusName: string) => {
+                        const match = selectedOrder.statusHistory?.find((h: any) => h.status.toLowerCase() === statusName.toLowerCase());
+                        return match ? new Date(match.updatedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : null;
+                      };
+
+                      return steps.map((step, idx) => {
+                        const isCompleted = idx <= clampedStepIndex;
+                        const isActive = idx === clampedStepIndex;
+                        const stepDate = getStatusDate(step);
+                        
+                        return (
+                          <div key={step} className="relative z-10 flex flex-col items-center flex-1">
+                            <div className={cn(
+                              "h-8 w-8 rounded-full border-2 flex items-center justify-center transition-all duration-300 bg-white",
+                              isActive 
+                                ? "border-emerald-500 text-emerald-600 bg-emerald-50 scale-110 shadow-md shadow-emerald-500/10" 
+                                : isCompleted 
+                                  ? "border-emerald-500 text-emerald-600 bg-emerald-50/50" 
+                                  : "border-stone-200 text-stone-400"
+                            )}>
+                              {isCompleted ? (
+                                <Check className="h-4 w-4 stroke-[3]" />
+                              ) : (
+                                <span className="text-xs font-bold">{idx + 1}</span>
+                              )}
+                            </div>
+                            <div className="absolute top-10 text-center w-24">
+                              <p className={cn(
+                                "text-[9px] font-extrabold tracking-tight leading-tight uppercase",
+                                isActive ? "text-emerald-600" : isCompleted ? "text-stone-850" : "text-stone-400"
+                              )}>
+                                {step}
+                              </p>
+                              {stepDate && (
+                                <p className="text-[8px] text-stone-450 mt-0.5 font-bold">
+                                  {stepDate}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()}
                   </div>
                 </div>
               )}
@@ -549,6 +666,7 @@ function OrdersPage() {
                 <button
                   onClick={() => {
                     setReturnOrderId(selectedOrder._id);
+                    setReturnItems([]);
                     setReturnModal(true);
                   }}
                   className="rounded-full border border-purple-200 bg-purple-50 px-5 py-2 text-xs font-bold text-purple-600 hover:bg-purple-100 transition cursor-pointer"
@@ -604,6 +722,36 @@ function OrdersPage() {
           <div className="w-full max-w-md rounded-3xl border border-stone-200 bg-white p-6 shadow-xl text-stone-900">
             <h3 className="font-display text-lg font-bold">Request Return</h3>
             <p className="text-xs text-stone-500 mt-1">Please provide the reason for requesting a return.</p>
+            {selectedOrder && selectedOrder.items.length > 1 && (
+              <div className="mt-4 space-y-2 border-y border-stone-100 py-3.5 text-left max-h-48 overflow-y-auto pr-1 no-scrollbar">
+                <label className="text-[10px] font-extrabold uppercase tracking-widest text-stone-400 block mb-2">
+                  Select Items to Return / Refund
+                </label>
+                {selectedOrder.items.map((item: any, idx: number) => {
+                  const key = `${item.product?.id || item.product}_${item.size}_${item.color}`;
+                  const isChecked = returnItems.includes(key);
+                  return (
+                    <label key={idx} className="flex items-center gap-3 rounded-xl border border-stone-100 p-2 hover:bg-stone-50 transition cursor-pointer text-xs font-semibold text-stone-850">
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => {
+                          setReturnItems(prev => 
+                            isChecked ? prev.filter(k => k !== key) : [...prev, key]
+                          );
+                        }}
+                        className="rounded border-stone-300 text-primary focus:ring-primary h-4 w-4"
+                      />
+                      <img src={getImageUrl(item.image)} className="h-14 w-14 rounded-xl object-cover bg-stone-50 border border-stone-200/50 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="truncate font-bold text-stone-900">{item.name}</p>
+                        <p className="text-[10px] text-stone-500 mt-0.5">Size {item.size} · {item.color} · Qty {item.qty}</p>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
             <textarea
               className="mt-4 w-full rounded-2xl border border-stone-200 p-3 text-sm focus:border-primary outline-none"
               placeholder="E.g. Size does not fit, wrong product delivered..."

@@ -136,7 +136,7 @@ export function Hero() {
       </div>
 
       {/* 2. Content Container: overlays the image on all screens, positioned downwards on mobile */}
-      <div className="absolute inset-0 z-20 px-6 sm:px-12 md:pl-20 lg:pl-32 xl:pl-56 flex flex-col justify-end pb-12 sm:pb-16 lg:justify-center lg:pb-0 bg-transparent drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)]">
+      <div className="absolute inset-0 z-20 px-6 sm:px-12 md:pl-20 lg:pl-32 xl:pl-56 flex flex-col justify-end pb-12 sm:pb-16 lg:justify-center lg:pb-0 bg-transparent">
         <div className="max-w-xl text-left">
           <AnimatePresence mode="wait" custom={direction}>
             <div key={active}>
@@ -146,10 +146,10 @@ export function Hero() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-  className="text-2xl sm:text-2xl md:text-2xl lg:text-3xl font-extrabold uppercase text-primary tracking-[0.25em]"
+                className="text-2xl sm:text-2xl md:text-2xl lg:text-3xl font-extrabold uppercase text-primary tracking-[0.25em]"
                 style={{ 
                   fontFamily: "'Times New Roman', Times, serif",
-                  textShadow: "0 2px 4px rgba(218, 27, 27, 0.5)"
+                  textShadow: "0 1px 3px rgba(0, 0, 0, 0.25)"
                 }}
               >
                 {current.eyebrow}
@@ -162,9 +162,10 @@ export function Hero() {
                   animate={{ y: 0, opacity: 1 }}
                   exit={{ y: "-100%", opacity: 0 }}
                   transition={{ duration: 0.85, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-className="mt-1.5 font-black leading-[1.1] text-white text-4xl sm:text-5xl md:text-5xl lg:text-6xl xl:text-6xl tracking-wide uppercase"                  style={{ 
+                  className="mt-1.5 font-black leading-[1.1] text-white text-4xl sm:text-5xl md:text-5xl lg:text-6xl xl:text-6xl tracking-wide uppercase"
+                  style={{ 
                     fontFamily: "'Times New Roman', Times, serif",
-                    textShadow: "0 2px 8px rgba(0,0,0,0.6)"
+                    textShadow: "0 2px 5px rgba(0, 0, 0, 0.35)"
                   }}
                 >
                   {renderTitle(current.title)}
@@ -189,7 +190,7 @@ className="mt-1.5 font-black leading-[1.1] text-white text-4xl sm:text-5xl md:te
                 className="hidden lg:block max-w-xl text-sm sm:text-base md:text-lg leading-relaxed text-stone-200 italic tracking-wide"
                 style={{ 
                   fontFamily: "'Times New Roman', Times, serif",
-                  textShadow: "0 2px 6px rgba(192, 147, 147, 0.5)"
+                  textShadow: "0 1px 3px rgba(0, 0, 0, 0.25)"
                 }}
               >
                 {current.subtitle}

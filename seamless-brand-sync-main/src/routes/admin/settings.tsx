@@ -18,6 +18,22 @@ function AdminSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  // Auth Page Customizations State
+  const [authSettings, setAuthSettings] = useState<any>({
+    slides: [
+      { image: "", title: "Discover Your Style", subtitle: "Explore premium MOCS collections tailored just for you." },
+      { image: "", title: "Create Your Vision", subtitle: "Join our community to unlock custom footwear and personalized styles." },
+      { image: "", title: "Crafted For Comfort", subtitle: "Every pair is built for active lifestyles and durable comfort." }
+    ]
+  });
+  const [originalAuthSettings, setOriginalAuthSettings] = useState<any>({
+    slides: [
+      { image: "", title: "Discover Your Style", subtitle: "Explore premium MOCS collections tailored just for you." },
+      { image: "", title: "Create Your Vision", subtitle: "Join our community to unlock custom footwear and personalized styles." },
+      { image: "", title: "Crafted For Comfort", subtitle: "Every pair is built for active lifestyles and durable comfort." }
+    ]
+  });
+
   // Hero Slides state
   const [heroSlides, setHeroSlides] = useState<any[]>([]);
   const [originalSlides, setOriginalSlides] = useState<any[]>([]);
@@ -171,7 +187,7 @@ function AdminSettingsPage() {
       { threshold: 0.2, rootMargin: "-80px 0px -50% 0px" }
     );
 
-    const sections = ["hero-slideshow", "promo-banner", "collections-banners", "promise-collage"];
+    const sections = ["hero-slideshow", "promo-banner", "collections-banners", "promise-collage", "auth-page"];
     sections.forEach((id) => {
       const el = document.getElementById(id);
       if (el) observer.observe(el);
@@ -184,7 +200,8 @@ function AdminSettingsPage() {
     JSON.stringify(heroSlides) !== JSON.stringify(originalSlides) ||
     JSON.stringify(categoriesBanners) !== JSON.stringify(originalCategoriesBanners) ||
     JSON.stringify(collectionsBanners) !== JSON.stringify(originalCollectionsBanners) ||
-    JSON.stringify(promiseCollage) !== JSON.stringify(originalPromiseCollage);
+    JSON.stringify(promiseCollage) !== JSON.stringify(originalPromiseCollage) ||
+    JSON.stringify(authSettings) !== JSON.stringify(originalAuthSettings);
 
   const blocker = useBlocker({
     shouldBlockFn: () => isDirty,
@@ -210,7 +227,9 @@ function AdminSettingsPage() {
         const heroRes = await apiClient.settings.get("hero_slides").catch(() => null);
         const bannerRes = await apiClient.settings.get("categories_banners").catch(() => null);
         const collectionsRes = await apiClient.settings.get("collections_banners").catch(() => null);
+
         const promiseRes = await apiClient.settings.get("promise_collage").catch(() => null);
+        const authRes = await apiClient.settings.get("auth_settings").catch(() => null);
 
         if (heroRes && Array.isArray(heroRes.value)) {
           setHeroSlides(heroRes.value);
@@ -279,6 +298,21 @@ function AdminSettingsPage() {
           setPromiseCollage(defaultPromiseCollage);
           setOriginalPromiseCollage(JSON.parse(JSON.stringify(defaultPromiseCollage)));
         }
+
+        if (authRes && authRes.value) {
+          let val = authRes.value;
+          if (!val.slides) {
+            val = {
+              slides: [
+                { image: val.loginImage || "", title: val.loginTitle || "Discover Your Style", subtitle: val.loginSubtitle || "Explore premium MOCS collections tailored just for you." },
+                { image: val.signupImage || "", title: val.signupTitle || "Create Your Vision", subtitle: val.signupSubtitle || "Join our community to unlock custom footwear and personalized styles." },
+                { image: "", title: "Crafted For Comfort", subtitle: "Every pair is built for active lifestyles and durable comfort." }
+              ]
+            };
+          }
+          setAuthSettings(val);
+          setOriginalAuthSettings(JSON.parse(JSON.stringify(val)));
+        }
       } catch (err: any) {
         toast.error("Failed to load settings from server");
       } finally {
@@ -295,10 +329,12 @@ function AdminSettingsPage() {
       await apiClient.settings.update("categories_banners", categoriesBanners);
       await apiClient.settings.update("collections_banners", collectionsBanners);
       await apiClient.settings.update("promise_collage", promiseCollage);
+      await apiClient.settings.update("auth_settings", authSettings);
       setOriginalSlides(JSON.parse(JSON.stringify(heroSlides)));
       setOriginalCategoriesBanners(JSON.parse(JSON.stringify(categoriesBanners)));
       setOriginalCollectionsBanners(JSON.parse(JSON.stringify(collectionsBanners)));
       setOriginalPromiseCollage(JSON.parse(JSON.stringify(promiseCollage)));
+      setOriginalAuthSettings(JSON.parse(JSON.stringify(authSettings)));
       toast.success("Settings updated successfully!");
       return true;
     } catch (err: any) {
@@ -457,6 +493,40 @@ function AdminSettingsPage() {
     }
   };
 
+  const handleAuthFileChange = async (e: React.ChangeEvent<HTMLInputElement>, slideIdx: number) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("image", file);
+
+    try {
+      toast.loading(`Uploading slide ${slideIdx + 1}...`, { id: `auth-upload-${slideIdx}` });
+      const token = localStorage.getItem("mocs_token");
+      const res = await fetch(`${API_BASE_URL}/api/products/upload`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+
+      if (!res.ok) {
+        throw new Error("Upload failed");
+      }
+
+      const data = await res.json();
+      setAuthSettings((prev: any) => {
+        const newSlides = [...prev.slides];
+        newSlides[slideIdx] = { ...newSlides[slideIdx], image: data.url };
+        return { ...prev, slides: newSlides };
+      });
+      toast.success("Image uploaded successfully!", { id: `auth-upload-${slideIdx}` });
+    } catch (err: any) {
+      console.error(err);
+      toast.dismiss(`auth-upload-${slideIdx}`);
+      toast.error(`Failed to upload slide ${slideIdx + 1} image`, { id: `auth-upload-${slideIdx}` });
+    }
+  };
+
   const updateCollectionField = (idx: number, field: string, value: any) => {
     setCollectionsBanners(
       collectionsBanners.map((c, i) => (i === idx ? { ...c, [field]: value } : c))
@@ -568,6 +638,17 @@ function AdminSettingsPage() {
           )}
         >
            Collage
+        </button>
+        <button
+          onClick={() => scrollToSection("auth-page")}
+          className={cn(
+            "flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold uppercase transition-all cursor-pointer whitespace-nowrap",
+            activeSection === "auth-page"
+              ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20 scale-105"
+              : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+          )}
+        >
+          Auth Page Config
         </button>
       </div>
 
@@ -1222,6 +1303,116 @@ function AdminSettingsPage() {
           })()}
         </div>
 
+        {/* Auth Page Customizations Section */}
+        <div id="auth-page" className="space-y-6 pt-6 border-t border-border scroll-mt-24 font-sans">
+          <div className="flex items-center justify-between">
+            <h2 className="font-display text-lg font-bold">
+              Auth Page Configuration
+            </h2>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-12 items-stretch pt-2">
+            {/* Live Previews */}
+            <div className="md:col-span-4 flex flex-col justify-between rounded-3xl border border-border bg-card p-5 shadow-soft space-y-4">
+              <div>
+                <span className="font-display text-xs font-extrabold text-primary uppercase tracking-wider block mb-3">Live Slides Previews</span>
+                
+                <div className="space-y-3">
+                  {authSettings.slides?.map((slide: any, idx: number) => (
+                    <div key={idx} className="relative group overflow-hidden rounded-2xl bg-zinc-900 border border-border h-[100px] flex flex-col justify-end p-3">
+                      {slide.image ? (
+                        <div className="absolute inset-0 h-full w-full">
+                          <img
+                            src={getImageUrl(slide.image)}
+                            alt={`Slide ${idx + 1} Preview`}
+                            className="h-full w-full object-cover brightness-[0.7] saturate-[0.8]"
+                          />
+                          <div className="absolute inset-0 bg-black/40" />
+                        </div>
+                      ) : (
+                        <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center text-zinc-500 text-[9px] font-mono uppercase tracking-wider text-center px-2">
+                          Fallback Hero / Product Cover
+                        </div>
+                      )}
+                      <div className="relative z-10 text-white space-y-0.5">
+                        <span className="text-[7px] bg-primary/20 text-primary border border-primary/20 px-1.5 py-0.5 rounded-full uppercase font-bold tracking-wider w-fit block">Slide {idx + 1}</span>
+                        <h4 className="font-display text-xs font-black text-white leading-tight mt-0.5 line-clamp-1">{slide.title || "Title"}</h4>
+                        <p className="text-[8px] text-zinc-300 line-clamp-1">{slide.subtitle || "Subtitle..."}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Inputs Form */}
+            <div className="md:col-span-8 rounded-3xl border border-border bg-card p-5 shadow-soft space-y-4">
+              <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1">
+                {authSettings.slides?.map((slide: any, idx: number) => (
+                  <div key={idx} className={cn("space-y-3 pb-4", idx < 2 && "border-b border-border/80")}>
+                    <h3 className="text-xs font-black uppercase text-primary tracking-wider">Auth Visual Slide {idx + 1}</h3>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Heading Title</label>
+                        <input
+                          required
+                          value={slide.title}
+                          onChange={(e) => {
+                            const newSlides = [...authSettings.slides];
+                            newSlides[idx] = { ...newSlides[idx], title: e.target.value };
+                            setAuthSettings((prev: any) => ({ ...prev, slides: newSlides }));
+                          }}
+                          className="input-field"
+                          placeholder="e.g. Discover Your Style"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Background Image</label>
+                        <div className="flex gap-2 items-center">
+                          <input
+                            value={slide.image || ""}
+                            onChange={(e) => {
+                              const newSlides = [...authSettings.slides];
+                              newSlides[idx] = { ...newSlides[idx], image: e.target.value };
+                              setAuthSettings((prev: any) => ({ ...prev, slides: newSlides }));
+                            }}
+                            className="input-field flex-1"
+                            placeholder="Image URL or blank"
+                          />
+                          <label className="flex h-11 px-3 items-center justify-center rounded-xl border border-dashed border-border hover:border-primary bg-muted/20 hover:bg-muted/40 transition text-xs font-bold cursor-pointer whitespace-nowrap gap-1">
+                            <Image className="h-4 w-4" />
+                            <span>Upload</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="sr-only"
+                              onChange={(e) => handleAuthFileChange(e, idx)}
+                            />
+                          </label>
+                        </div>
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Detail Description</label>
+                        <textarea
+                          rows={2}
+                          value={slide.subtitle}
+                          onChange={(e) => {
+                            const newSlides = [...authSettings.slides];
+                            newSlides[idx] = { ...newSlides[idx], subtitle: e.target.value };
+                            setAuthSettings((prev: any) => ({ ...prev, slides: newSlides }));
+                          }}
+                          className="input-field py-2"
+                          placeholder="Short marketing text..."
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="flex justify-end pt-4">
           <button
             onClick={handleSaveSettings}
@@ -1256,6 +1447,7 @@ function AdminSettingsPage() {
                   setCategoriesBanners(originalCategoriesBanners);
                   setCollectionsBanners(originalCollectionsBanners);
                   setPromiseCollage(originalPromiseCollage);
+                  setAuthSettings(originalAuthSettings);
                   blocker.proceed();
                 }}
                 className="rounded-full border border-destructive/30 bg-destructive/10 text-destructive px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition hover:bg-destructive/20 cursor-pointer"

@@ -1,6 +1,7 @@
 import { ReactNode, useState, useRef, useEffect } from "react";
 import { ChevronDown, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "motion/react";
 
 interface AdminShellProps {
   title: string;
@@ -53,41 +54,49 @@ export function AdminDropdown({ value, onChange, options, placeholder = "Select 
   const selectedOption = options.find((o) => o.value === value);
 
   return (
-    <div ref={containerRef} className={cn("relative inline-block text-left min-w-[150px]", className)}>
+    <div ref={containerRef} className={cn("relative inline-block text-left min-w-[150px] select-none", className)} style={{ zIndex: open ? 50 : 1 }}>
       <button
         disabled={disabled}
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground hover:border-primary hover:bg-muted/30 transition focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-border"
+        className="flex w-full items-center justify-between gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-xs font-bold text-foreground hover:border-primary hover:bg-muted/30 transition duration-150 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
       >
         <span className="truncate">{selectedOption ? selectedOption.label : placeholder}</span>
         <ChevronDown className={cn("h-4 w-4 text-primary transition-transform shrink-0", open && "rotate-180")} />
       </button>
 
-      {open && !disabled && (
-        <ul className="absolute right-0 left-0 z-50 mt-1.5 max-h-60 overflow-y-auto rounded-xl border border-border/80 bg-popover/95 backdrop-blur-md p-1 shadow-lg animate-in fade-in slide-in-from-top-1 duration-150 no-scrollbar">
-          {options.map((opt) => (
-            <li key={opt.value}>
-              <button
-                type="button"
-                onClick={() => {
-                  onChange(opt.value);
-                  setOpen(false);
-                }}
-                className={cn(
-                  "flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs font-semibold transition-all",
-                  value === opt.value
-                    ? "bg-primary text-primary-foreground"
-                    : "text-foreground hover:bg-primary/10 hover:text-primary"
-                )}
-              >
-                <span className="truncate">{opt.label}</span>
-                {value === opt.value && <Check className="h-3.5 w-3.5 shrink-0" />}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+      <AnimatePresence>
+        {open && !disabled && (
+          <motion.ul
+            initial={{ opacity: 0, y: -6, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.98 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            className="absolute right-0 left-0 z-50 mt-1.5 max-h-60 overflow-y-auto rounded-xl border border-stone-200 bg-white/95 backdrop-blur-md p-1 shadow-lg no-scrollbar min-w-[160px]"
+          >
+            {options.map((opt) => (
+              <li key={opt.value}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onChange(opt.value);
+                    setOpen(false);
+                  }}
+                  className={cn(
+                    "flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs font-semibold transition-all duration-150 cursor-pointer select-none",
+                    value === opt.value
+                      ? "bg-primary text-white"
+                      : "text-stone-700 hover:bg-primary/10 hover:text-primary"
+                  )}
+                >
+                  <span className="truncate">{opt.label}</span>
+                  {value === opt.value && <Check className="h-3.5 w-3.5 shrink-0" />}
+                </button>
+              </li>
+            ))}
+          </motion.ul>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

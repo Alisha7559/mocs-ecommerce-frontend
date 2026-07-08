@@ -267,7 +267,7 @@ export function Navbar() {
                       <>
                         <Link
                           to="/auth"
-                          search={{ redirect: pathname }}
+                          search={{ redirect: pathname, mode: "login" } as any}
                           onClick={() => setUserOpen(false)}
                           className="block rounded-lg px-3 py-2 text-sm font-semibold hover:bg-accent"
                         >
@@ -275,7 +275,7 @@ export function Navbar() {
                         </Link>
                         <Link
                           to="/auth"
-                          search={{ redirect: pathname }}
+                          search={{ redirect: pathname, mode: "signup" } as any}
                           onClick={() => {
                             setUserOpen(false);
                           }}

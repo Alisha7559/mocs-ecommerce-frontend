@@ -99,7 +99,7 @@ export function CartDrawer() {
                             </button>
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            US {item.size} · {item.color}
+                            Size {item.size} · {item.color}
                           </p>
                           <div className="mt-auto flex items-center justify-between">
                             <div className="flex items-center gap-1 rounded-full border border-border">
