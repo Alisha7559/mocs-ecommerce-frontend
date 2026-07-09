@@ -11,7 +11,6 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 import { Toaster } from "sonner";
-import { ClerkProvider } from "@clerk/clerk-react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -136,9 +135,6 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-const CLERK_PUBLISHABLE_KEY = (import.meta as any).env?.VITE_CLERK_PUBLISHABLE_KEY;
-const isClerkEnabled = !!CLERK_PUBLISHABLE_KEY && CLERK_PUBLISHABLE_KEY !== "pk_test_ZmFrZS1jbGVyay1rZXktNTAuY2xlcmsuYWNjb3VudHMuZGV2JA==";
-
 const queryClient = new QueryClient();
 
 function RootComponent() {
@@ -167,11 +163,5 @@ function RootComponent() {
     </QueryClientProvider>
   );
 
-  return isClerkEnabled ? (
-    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
-      {renderContent()}
-    </ClerkProvider>
-  ) : (
-    renderContent()
-  );
+  return renderContent();
 }

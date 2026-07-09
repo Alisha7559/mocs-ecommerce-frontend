@@ -9,7 +9,6 @@ import {
 import { toast } from "sonner";
 import type { Product } from "./products";
 import { apiClient, getToken, setToken, API_BASE_URL } from "./api";
-import { useUser } from "@clerk/clerk-react";
 
 export type CartItem = {
   product: Product;
@@ -79,49 +78,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [role, setRoleState] = useState<Role>("user");
   const [user, setUser] = useState<any>(null);
 
-  const isClerkEnabled =
-    !!(import.meta as any).env?.VITE_CLERK_PUBLISHABLE_KEY &&
-    (import.meta as any).env?.VITE_CLERK_PUBLISHABLE_KEY !== "pk_test_ZmFrZS1jbGVyay1rZXktNTAuY2xlcmsuYWNjb3VudHMuZGV2JA==";
 
-  const clerkData = isClerkEnabled ? useUser() : { user: null, isLoaded: true };
-  const clerkUser = clerkData.user;
-  const clerkUserLoaded = clerkData.isLoaded;
-
-  useEffect(() => {
-    if (clerkUserLoaded && clerkUser) {
-      const syncClerkUser = async () => {
-        try {
-          const email = clerkUser.primaryEmailAddress?.emailAddress;
-          const name = clerkUser.fullName || clerkUser.username || "Clerk User";
-          const avatar = clerkUser.imageUrl;
-          const clerkId = clerkUser.id;
-          
-          if (!email) return;
-
-          const res = await fetch(`${API_BASE_URL}/api/auth/clerk-sync`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, name, clerkId, avatar }),
-          });
-
-          if (res.ok) {
-            const data = await res.json();
-            login(data.token, data.user);
-          }
-        } catch (err) {
-          console.error("Clerk sync failed:", err);
-        }
-      };
-
-      if (!user || user.email !== clerkUser.primaryEmailAddress?.emailAddress) {
-        syncClerkUser();
-      }
-    } else if (clerkUserLoaded && !clerkUser) {
-      if (user && user.clerkId) {
-        logout();
-      }
-    }
-  }, [clerkUser, clerkUserLoaded, user]);
 
   const fetchUserProfile = async () => {
     const token = getToken();

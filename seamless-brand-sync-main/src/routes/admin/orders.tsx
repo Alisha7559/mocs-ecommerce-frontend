@@ -516,23 +516,35 @@ function AdminOrders() {
                         <div className="grid gap-3 grid-cols-2">
                           <div className="space-y-1">
                             <label className="text-[9px] font-extrabold text-stone-400 uppercase tracking-widest block mb-1">Fulfillment</label>
-                            <AdminDropdown
-                              value={selectedOrder.orderStatus || selectedOrder.status}
-                              onChange={(val) => handleUpdateStatus(selectedOrder._id, val)}
-                              disabled={updatingStatus}
-                              className="w-full text-stone-700 font-bold"
-                              options={["Placed", "Confirmed", "Processing", "Shipped", "Out for Delivery", "Delivered", "Cancelled", "Returned"].map((s) => ({ value: s, label: s }))}
-                            />
+                            {(selectedOrder.paymentStatus?.toLowerCase() === "failed" || selectedOrder.paymentStatus?.toLowerCase() === "cancelled") ? (
+                              <div className="font-semibold text-stone-500 bg-stone-100/80 border border-stone-200/50 rounded-xl px-3 py-2 text-center text-xs">
+                                {selectedOrder.orderStatus || selectedOrder.status}
+                              </div>
+                            ) : (
+                              <AdminDropdown
+                                value={selectedOrder.orderStatus || selectedOrder.status}
+                                onChange={(val) => handleUpdateStatus(selectedOrder._id, val)}
+                                disabled={updatingStatus}
+                                className="w-full text-stone-700 font-bold"
+                                options={["Placed", "Confirmed", "Processing", "Shipped", "Out for Delivery", "Delivered", "Cancelled", "Returned"].map((s) => ({ value: s, label: s }))}
+                              />
+                            )}
                           </div>
                           <div className="space-y-1">
                             <label className="text-[9px] font-extrabold text-stone-400 uppercase tracking-widest block mb-1">Payment</label>
-                            <AdminDropdown
-                              value={selectedOrder.paymentStatus}
-                              onChange={(val) => handleUpdatePaymentStatus(selectedOrder._id, val)}
-                              disabled={updatingStatus}
-                              className="w-full text-stone-700 font-bold"
-                              options={["Pending", "Paid", "Failed", "Refunded"].map((s) => ({ value: s, label: s }))}
-                            />
+                            {(selectedOrder.paymentStatus?.toLowerCase() === "failed" || selectedOrder.paymentStatus?.toLowerCase() === "cancelled") ? (
+                              <div className="font-bold text-destructive bg-destructive/10 border border-destructive/20 rounded-xl px-3 py-2 text-center text-xs uppercase">
+                                Failed
+                              </div>
+                            ) : (
+                              <AdminDropdown
+                                value={selectedOrder.paymentStatus}
+                                onChange={(val) => handleUpdatePaymentStatus(selectedOrder._id, val)}
+                                disabled={updatingStatus}
+                                className="w-full text-stone-700 font-bold"
+                                options={["Pending", "Paid", "Failed", "Refunded"].map((s) => ({ value: s, label: s }))}
+                              />
+                            )}
                           </div>
                         </div>
 

@@ -5,6 +5,13 @@ import { toast } from "sonner";
 import { apiClient, API_BASE_URL } from "@/lib/api";
 import { cn, getImageUrl } from "@/lib/utils";
 
+// Extracted Config subcomponents
+import { HeroSlidesConfig } from "@/components/admin/HeroSlidesConfig";
+import { CategoryBannersConfig } from "@/components/admin/CategoryBannersConfig";
+import { CollectionsConfig } from "@/components/admin/CollectionsConfig";
+import { CollageConfig } from "@/components/admin/CollageConfig";
+import { AuthConfig } from "@/components/admin/AuthConfig";
+
 export const Route = createFileRoute("/admin/settings")({
   head: () => ({
     meta: [
@@ -370,7 +377,12 @@ function AdminSettingsPage() {
     );
   };
 
-  const handlePromiseFileChange = async (e: React.ChangeEvent<HTMLInputElement>, idx: number) => {
+  const handleFileUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    toastMsg: string,
+    toastId: string,
+    onSuccess: (url: string) => void
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -378,7 +390,7 @@ function AdminSettingsPage() {
     formData.append("image", file);
 
     try {
-      toast.loading("Uploading image...", { id: `promise-upload-${idx}` });
+      toast.loading(toastMsg, { id: toastId });
       const token = localStorage.getItem("mocs_token");
       const res = await fetch(`${API_BASE_URL}/api/products/upload`, {
         method: "POST",
@@ -386,145 +398,48 @@ function AdminSettingsPage() {
         body: formData,
       });
 
-      if (!res.ok) {
-        throw new Error("Upload failed");
-      }
+      if (!res.ok) throw new Error("Upload failed");
 
       const data = await res.json();
-      updatePromiseField(idx, "bg", data.url);
-      toast.success("Image uploaded successfully!", { id: `promise-upload-${idx}` });
+      onSuccess(data.url);
+      toast.success("Image uploaded successfully!", { id: toastId });
     } catch (err: any) {
       console.error(err);
-      toast.dismiss(`promise-upload-${idx}`);
-      toast.error("Failed to upload image", { id: `promise-upload-${idx}` });
+      toast.dismiss(toastId);
+      toast.error("Failed to upload image", { id: toastId });
     }
   };
 
-  const handleBannerFileChange = async (e: React.ChangeEvent<HTMLInputElement>, bannerIdx: number) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handlePromiseFileChange = (e: React.ChangeEvent<HTMLInputElement>, idx: number) => {
+    handleFileUpload(e, "Uploading image...", `promise-upload-${idx}`, (url) => updatePromiseField(idx, "bg", url));
+  };
 
-    const formData = new FormData();
-    formData.append("image", file);
+  const handleBannerFileChange = (e: React.ChangeEvent<HTMLInputElement>, idx: number) => {
+    handleFileUpload(e, "Uploading background image...", `banner-upload-${idx}`, (url) => updateBannerField(idx, "bg", url));
+  };
 
-    try {
-      toast.loading("Uploading background image...", { id: `banner-upload-${bannerIdx}` });
-      const token = localStorage.getItem("mocs_token");
-      const res = await fetch(`${API_BASE_URL}/api/products/upload`, {
-        method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: formData,
+  const handleHeroFileChange = (e: React.ChangeEvent<HTMLInputElement>, idx: number) => {
+    handleFileUpload(e, "Uploading background image...", `hero-upload-${idx}`, (url) => updateHeroSlideField(idx, "bg", url));
+  };
+
+  const handleCollectionFileChange = (e: React.ChangeEvent<HTMLInputElement>, idx: number) => {
+    handleFileUpload(e, "Uploading background image...", `collection-upload-${idx}`, (url) => updateCollectionField(idx, "bg", url));
+  };
+
+  const handleAuthFileChange = (e: React.ChangeEvent<HTMLInputElement>, idx: number) => {
+    handleFileUpload(e, `Uploading slide ${idx + 1}...`, `auth-upload-${idx}`, (url) => {
+      setAuthSettings((prev: any) => {
+        const newSlides = [...prev.slides];
+        newSlides[idx] = { ...newSlides[idx], image: url };
+        return { ...prev, slides: newSlides };
       });
-
-      if (!res.ok) {
-        throw new Error("Upload failed");
-      }
-
-      const data = await res.json();
-      updateBannerField(bannerIdx, "bg", data.url);
-      toast.success("Banner background image uploaded successfully!", { id: `banner-upload-${bannerIdx}` });
-    } catch (err: any) {
-      console.error(err);
-      toast.error("Failed to upload banner image", { id: `banner-upload-${bannerIdx}` });
-    }
+    });
   };
 
   const updateBannerField = (idx: number, field: string, value: any) => {
     setCategoriesBanners(
       categoriesBanners.map((b, i) => (i === idx ? { ...b, [field]: value } : b))
     );
-  };
-
-  const handleHeroFileChange = async (e: React.ChangeEvent<HTMLInputElement>, slideIdx: number) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append("image", file);
-
-    try {
-      toast.loading("Uploading background image...", { id: `hero-upload-${slideIdx}` });
-      const token = localStorage.getItem("mocs_token");
-      const res = await fetch(`${API_BASE_URL}/api/products/upload`, {
-        method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: formData,
-      });
-
-      if (!res.ok) {
-        throw new Error("Upload failed");
-      }
-
-      const data = await res.json();
-      updateHeroSlideField(slideIdx, "bg", data.url);
-      toast.success("Hero slide image uploaded successfully!", { id: `hero-upload-${slideIdx}` });
-    } catch (err: any) {
-      console.error(err);
-      toast.error("Failed to upload hero image", { id: `hero-upload-${slideIdx}` });
-    }
-  };
-
-  const handleCollectionFileChange = async (e: React.ChangeEvent<HTMLInputElement>, idx: number) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append("image", file);
-
-    try {
-      toast.loading("Uploading background image...", { id: `collection-upload-${idx}` });
-      const token = localStorage.getItem("mocs_token");
-      const res = await fetch(`${API_BASE_URL}/api/products/upload`, {
-        method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: formData,
-      });
-
-      if (!res.ok) {
-        throw new Error("Upload failed");
-      }
-
-      const data = await res.json();
-      updateCollectionField(idx, "bg", data.url);
-      toast.success("Collection background image uploaded successfully!", { id: `collection-upload-${idx}` });
-    } catch (err: any) {
-      console.error(err);
-      toast.error("Failed to upload collection image", { id: `collection-upload-${idx}` });
-    }
-  };
-
-  const handleAuthFileChange = async (e: React.ChangeEvent<HTMLInputElement>, slideIdx: number) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append("image", file);
-
-    try {
-      toast.loading(`Uploading slide ${slideIdx + 1}...`, { id: `auth-upload-${slideIdx}` });
-      const token = localStorage.getItem("mocs_token");
-      const res = await fetch(`${API_BASE_URL}/api/products/upload`, {
-        method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: formData,
-      });
-
-      if (!res.ok) {
-        throw new Error("Upload failed");
-      }
-
-      const data = await res.json();
-      setAuthSettings((prev: any) => {
-        const newSlides = [...prev.slides];
-        newSlides[slideIdx] = { ...newSlides[slideIdx], image: data.url };
-        return { ...prev, slides: newSlides };
-      });
-      toast.success("Image uploaded successfully!", { id: `auth-upload-${slideIdx}` });
-    } catch (err: any) {
-      console.error(err);
-      toast.dismiss(`auth-upload-${slideIdx}`);
-      toast.error(`Failed to upload slide ${slideIdx + 1} image`, { id: `auth-upload-${slideIdx}` });
-    }
   };
 
   const updateCollectionField = (idx: number, field: string, value: any) => {
@@ -650,768 +565,54 @@ function AdminSettingsPage() {
         >
           Auth Page Config
         </button>
-      </div>
+      </div>      <div className="space-y-6">
+        <HeroSlidesConfig
+          heroSlides={heroSlides}
+          updateHeroSlideField={updateHeroSlideField}
+          addHeroSlide={addHeroSlide}
+          removeHeroSlide={removeHeroSlide}
+          handleHeroFileChange={handleHeroFileChange}
+          openFocusIdx={openFocusIdx}
+          setOpenFocusIdx={setOpenFocusIdx}
+        />
 
-      <div className="space-y-6">
-        <div id="hero-slideshow" className="flex items-center justify-between border-b border-border pb-3 scroll-mt-24">
-          <h2 className="font-display text-lg font-bold">
-            Hero Slideshow
-          </h2>
-          <button
-            onClick={addHeroSlide}
-            className="flex items-center gap-1.5 rounded-full border border-border bg-background px-4 py-2 text-xs font-bold uppercase transition hover:bg-accent cursor-pointer"
-          >
-            <Plus className="h-4 w-4" /> Add Slide
-          </button>
-        </div>
+        <CategoryBannersConfig
+          categoriesBanners={categoriesBanners}
+          selectedBannerIdx={selectedBannerIdx}
+          setSelectedBannerIdx={setSelectedBannerIdx}
+          updateBannerField={updateBannerField}
+          handleBannerFileChange={handleBannerFileChange}
+          getImageUrl={getImageUrl}
+        />
 
-        <div className="space-y-6">
-          {heroSlides.map((slide, idx) => (
-            <div key={idx} className="rounded-3xl border border-border bg-card p-6 shadow-soft space-y-4">
-              <div className="flex items-center justify-between border-b border-border pb-3">
-                <span className="font-display text-sm font-extrabold text-primary uppercase">Slide #{idx + 1}</span>
-                {heroSlides.length > 1 && (
-                  <button
-                    onClick={() => removeHeroSlide(idx)}
-                    className="rounded-full bg-destructive/10 p-1.5 text-destructive transition hover:bg-destructive/20 cursor-pointer"
-                  >
-                    <Trash2 className="h-4.5 w-4.5" />
-                  </button>
-                )}
-              </div>
+        <CollectionsConfig
+          collectionsBanners={collectionsBanners}
+          selectedCollectionIdx={selectedCollectionIdx}
+          setSelectedCollectionIdx={setSelectedCollectionIdx}
+          updateCollectionField={updateCollectionField}
+          addCollectionBanner={addCollectionBanner}
+          removeCollectionBanner={removeCollectionBanner}
+          handleCollectionFileChange={handleCollectionFileChange}
+          getImageUrl={getImageUrl}
+        />
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Eyebrow (Small Tag)</label>
-                  <input
-                    required
-                    value={slide.eyebrow}
-                    onChange={(e) => updateHeroSlideField(idx, "eyebrow", e.target.value)}
-                    className="input-field"
-                    placeholder="e.g. New Arrivals"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Title (Heading)</label>
-                  <input
-                    required
-                    value={slide.title}
-                    onChange={(e) => updateHeroSlideField(idx, "title", e.target.value)}
-                    className="input-field"
-                    placeholder="e.g. Step Into Style"
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Subtitle (Description)</label>
-                  <input
-                    required
-                    value={slide.subtitle}
-                    onChange={(e) => updateHeroSlideField(idx, "subtitle", e.target.value)}
-                    className="input-field"
-                    placeholder="e.g. Feel the comfort of polyurethanes."
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">CTA (Button Label)</label>
-                  <input
-                    required
-                    value={slide.cta}
-                    onChange={(e) => updateHeroSlideField(idx, "cta", e.target.value)}
-                    className="input-field"
-                    placeholder="e.g. Shop Now"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Link URL</label>
-                  <input
-                    required
-                    value={slide.to}
-                    onChange={(e) => updateHeroSlideField(idx, "to", e.target.value)}
-                    className="input-field"
-                    placeholder="e.g. /shop"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Mobile Image Focus</label>
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setOpenFocusIdx(openFocusIdx === idx ? null : idx)}
-                      className="w-full text-left rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-sm font-semibold text-stone-900 transition-all focus:outline-none focus:ring-1 focus:ring-primary flex items-center justify-between shadow-sm cursor-pointer"
-                    >
-                      <span>
-                        {slide.mobileFocus === "right"
-                          ? "Right Focus (Footwear on Right)"
-                          : slide.mobileFocus === "left"
-                            ? "Left Focus (Footwear on Left)"
-                            : "Center Focus (Default)"}
-                      </span>
-                      <ChevronDown className={cn("h-4 w-4 text-primary transition-transform duration-200", openFocusIdx === idx && "rotate-180")} />
-                    </button>
+        <CollageConfig
+          promiseCollage={promiseCollage}
+          selectedPromiseIdx={selectedPromiseIdx}
+          setSelectedPromiseIdx={setSelectedPromiseIdx}
+          updatePromiseField={updatePromiseField}
+          addPromiseBanner={addPromiseBanner}
+          removePromiseBanner={removePromiseBanner}
+          handlePromiseFileChange={handlePromiseFileChange}
+          getImageUrl={getImageUrl}
+        />
 
-                    {openFocusIdx === idx && (
-                      <>
-                        <div
-                          className="fixed inset-0 z-30"
-                          onClick={() => setOpenFocusIdx(null)}
-                        />
-                        <div className="absolute left-0 right-0 mt-1.5 z-40 rounded-xl border border-stone-150 bg-white p-1.5 shadow-[0_10px_25px_rgba(0,0,0,0.08)] animate-in fade-in slide-in-from-top-2 duration-200">
-                          {[
-                            { value: "center", label: "Center Focus (Default)" },
-                            { value: "right", label: "Right Focus (Footwear on Right)" },
-                            { value: "left", label: "Left Focus (Footwear on Left)" }
-                          ].map((opt) => (
-                            <button
-                              key={opt.value}
-                              type="button"
-                              onClick={() => {
-                                updateHeroSlideField(idx, "mobileFocus", opt.value);
-                                setOpenFocusIdx(null);
-                              }}
-                              className={cn(
-                                "w-full text-left rounded-lg px-3 py-2 text-xs font-semibold transition cursor-pointer",
-                                (slide.mobileFocus || "center") === opt.value
-                                  ? "bg-primary/10 text-primary"
-                                  : "text-stone-700 hover:bg-stone-50 hover:text-black"
-                              )}
-                            >
-                              {opt.label}
-                            </button>
-                          ))}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Background Image</label>
-                  <div className="flex flex-col sm:flex-row gap-4 items-center">
-                    <input
-                      required
-                      value={slide.bg}
-                      onChange={(e) => updateHeroSlideField(idx, "bg", e.target.value)}
-                      className="input-field flex-1"
-                      placeholder="Image URL (e.g. https://...)"
-                    />
-                    <label className="flex h-11 px-4 items-center justify-center rounded-xl border border-dashed border-border hover:border-primary bg-muted/20 hover:bg-muted/40 transition text-xs font-bold cursor-pointer whitespace-nowrap gap-1">
-                      <Image className="h-4 w-4" />
-                      <span>Upload from Device</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="sr-only"
-                        onChange={(e) => handleHeroFileChange(e, idx)}
-                      />
-                    </label>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>        {/* Brand Banner Section Config */}
-        <div id="promo-banner" className="space-y-6 pt-6 border-t border-border scroll-mt-24 font-sans">
-          <div className="flex items-center justify-between">
-            <h2 className="font-display text-lg font-bold">
-              Category Section Banners 
-            </h2>
-          </div>
-
-          {/* Banner Tabs Selector */}
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none border-b border-border/60">
-            {categoriesBanners.map((banner, idx) => (
-              <button
-                key={banner.key}
-                type="button"
-                onClick={() => setSelectedBannerIdx(idx)}
-                className={cn(
-                  "px-5 py-2 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap shadow-sm border",
-                  selectedBannerIdx === idx
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-card text-muted-foreground border-border hover:bg-muted/50 hover:text-foreground"
-                )}
-              >
-                {banner.title || `Banner #${idx + 1}`}
-              </button>
-            ))}
-          </div>
-
-          {(() => {
-            const currentBanner = categoriesBanners[selectedBannerIdx] || { title: "", to: "", bg: "", desc: "", cta: "" };
-
-            return (
-              <div className="grid gap-6 md:grid-cols-12 items-stretch pt-2">
-                {/* Live Preview Card */}
-                <div className="md:col-span-5 flex flex-col justify-between rounded-3xl border border-border bg-card p-6 shadow-soft space-y-4">
-                  <div>
-                    <span className="font-display text-xs font-extrabold text-primary uppercase tracking-wider block mb-3">Live Preview</span>
-                    
-                    {selectedBannerIdx === 0 ? (
-                      /* Main Large Landscape Banner Preview */
-                      <div className="relative group overflow-hidden rounded-none bg-stone-900 shadow-soft h-[240px] flex flex-col justify-end text-left w-full border border-border">
-                        {currentBanner.bg ? (
-                          <div className="absolute inset-0 h-full w-full">
-                            <img
-                              src={getImageUrl(currentBanner.bg)}
-                              alt="Live Preview"
-                              className="h-full w-full object-cover"
-                            />
-                            <div className="absolute inset-0 bg-black/60" />
-                          </div>
-                        ) : (
-                          <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center text-zinc-500 text-xs font-mono uppercase tracking-widest">
-                            No Image Configured
-                          </div>
-                        )}
-                        <div className="relative z-10 p-6 text-white space-y-2">
-                          <h3 className="font-display text-2xl font-extrabold leading-[1.1]">{currentBanner.title || "Title"}</h3>
-                          <p className="text-[11px] text-stone-300 line-clamp-3 leading-relaxed font-sans">{currentBanner.desc || "Description"}</p>
-                          <div className="pt-1">
-                            <span className="inline-block border border-white px-4 py-1.5 text-[9px] font-bold uppercase tracking-wider text-white">
-                              {currentBanner.cta || "CTA Button"}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      /* Category Grid Square Card Preview (with simulated hover effect) */
-                      <div className="relative group overflow-hidden rounded-none bg-stone-900 shadow-soft h-[240px] aspect-square mx-auto flex flex-col justify-end text-left w-full max-w-[240px] border border-border">
-                        {currentBanner.bg ? (
-                          <div className="absolute inset-0 h-full w-full">
-                            <img
-                              src={getImageUrl(currentBanner.bg)}
-                              alt="Live Preview"
-                              className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105"
-                            />
-                            <div className="absolute inset-0 bg-black/40 transition-colors duration-500 group-hover:bg-black/55" />
-                          </div>
-                        ) : (
-                          <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center text-zinc-500 text-xs font-mono uppercase tracking-widest">
-                            No Image Configured
-                          </div>
-                        )}
-                        {/* Default Overlay */}
-                        <div className="absolute inset-x-0 bottom-6 text-center text-white transition-all duration-300 group-hover:opacity-0 group-hover:translate-y-4 z-10 px-4">
-                          <h3 className="font-display text-xl font-extrabold">{currentBanner.title}</h3>
-                          <p className="text-[10px] text-stone-300 mt-1 font-medium font-sans">{currentBanner.desc}</p>
-                        </div>
-                        {/* Hover Overlay */}
-                        <div className="absolute inset-0 flex items-center justify-center p-3 z-20">
-                          <div className="w-full h-full border border-white/10 bg-stone-950/90 backdrop-blur-xs p-4 flex flex-col items-center justify-center text-center rounded-none opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-350 select-none">
-                            <h4 className="font-display text-lg font-extrabold text-white">{currentBanner.title}</h4>
-                            <p className="text-[9px] text-stone-400 mt-1 max-w-[150px] leading-relaxed font-medium font-sans">
-                              Discover premium comfort and style details with {currentBanner.title} collection.
-                            </p>
-                            <span className="mt-3 bg-white text-stone-900 text-[9px] font-black uppercase tracking-wider py-1.5 px-4 shadow-md">
-                              {currentBanner.cta || "Discover More"}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    <p className="text-center text-[10px] text-muted-foreground mt-3 font-semibold">Hover cursor over preview box to test active/hover state animations!</p>
-                  </div>
-                </div>
-
-                {/* Inputs Form */}
-                <div className="md:col-span-7 rounded-3xl border border-border bg-card p-6 shadow-soft space-y-4">
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Banner Title</label>
-                      <input
-                        required
-                        value={currentBanner.title || ""}
-                        onChange={(e) => updateBannerField(selectedBannerIdx, "title", e.target.value)}
-                        className="input-field"
-                        placeholder="e.g. We Are MOCS"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">CTA (Button Label)</label>
-                      <input
-                        required
-                        value={currentBanner.cta || ""}
-                        onChange={(e) => updateBannerField(selectedBannerIdx, "cta", e.target.value)}
-                        className="input-field"
-                        placeholder="e.g. Purchase Now!"
-                      />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Banner Description</label>
-                      <textarea
-                        required
-                        rows={2}
-                        value={currentBanner.desc || ""}
-                        onChange={(e) => updateBannerField(selectedBannerIdx, "desc", e.target.value)}
-                        className="input-field py-2"
-                        placeholder="Banner description text..."
-                      />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Link URL</label>
-                      <input
-                        required
-                        value={currentBanner.to || ""}
-                        onChange={(e) => updateBannerField(selectedBannerIdx, "to", e.target.value)}
-                        className="input-field"
-                        placeholder="e.g. /shop"
-                      />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Background Image</label>
-                      <div className="flex flex-col sm:flex-row gap-4 items-center">
-                        <input
-                          required
-                          value={currentBanner.bg || ""}
-                          onChange={(e) => updateBannerField(selectedBannerIdx, "bg", e.target.value)}
-                          className="input-field flex-1"
-                          placeholder="Image URL (e.g. https://...)"
-                        />
-                        <label className="flex h-11 px-4 items-center justify-center rounded-xl border border-dashed border-border hover:border-primary bg-muted/20 hover:bg-muted/40 transition text-xs font-bold cursor-pointer whitespace-nowrap gap-1">
-                          <Image className="h-4 w-4" />
-                          <span>Upload from Device</span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="sr-only"
-                            onChange={(e) => handleBannerFileChange(e, selectedBannerIdx)}
-                          />
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })()}
-        </div>
-
-        {/* Collections Section Config */}
-        <div id="collections-banners" className="space-y-6 pt-6 border-t border-border scroll-mt-24 font-sans">
-          <div className="flex items-center justify-between">
-            <h2 className="font-display text-lg font-bold">
-              Collections Section Banners
-            </h2>
-            <button
-              onClick={addCollectionBanner}
-              className="flex items-center gap-1.5 rounded-full border border-border bg-background px-4 py-2 text-xs font-bold uppercase transition hover:bg-accent cursor-pointer"
-            >
-              <Plus className="h-4 w-4" /> Add Collection
-            </button>
-          </div>
-
-          {/* Banner Tabs Selector with Delete Buttons */}
-          <div className="flex gap-2 items-center overflow-x-auto pb-2 scrollbar-none border-b border-border/60">
-            {collectionsBanners.map((banner, idx) => (
-              <div key={banner.key || idx} className="flex items-center gap-1.5 bg-card rounded-full pr-1.5 border border-border/40 shadow-xs">
-                <button
-                  type="button"
-                  onClick={() => setSelectedCollectionIdx(idx)}
-                  className={cn(
-                    "px-5 py-2 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap border-0",
-                    selectedCollectionIdx === idx
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-transparent text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  {banner.title || `Collection #${idx + 1}`}
-                </button>
-                {collectionsBanners.length > 1 && (
-                  <button
-                    onClick={() => removeCollectionBanner(idx)}
-                    className="rounded-full bg-destructive/10 p-1 text-destructive transition hover:bg-destructive/20 cursor-pointer"
-                    title="Delete Collection"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {(() => {
-            const currentCollection = collectionsBanners[selectedCollectionIdx];
-            if (!currentCollection) return null;
-
-            return (
-              <div className="grid gap-6 md:grid-cols-12 items-stretch pt-2">
-                {/* Live Preview Card */}
-                <div className="md:col-span-5 flex flex-col justify-between rounded-3xl border border-border bg-card p-6 shadow-soft space-y-4">
-                  <div>
-                    <span className="font-display text-xs font-extrabold text-primary uppercase tracking-wider block mb-3">Live Preview</span>
-                    
-                    {/* Collection Banner Card style */}
-                    <div className="relative group overflow-hidden rounded-3xl bg-stone-900 shadow-soft h-[150px] mx-auto flex flex-col items-center justify-center text-center w-full border border-border">
-                      {currentCollection.bg ? (
-                        <div className="absolute inset-0 h-full w-full">
-                          <img
-                            src={getImageUrl(currentCollection.bg)}
-                            alt="Live Preview"
-                            className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                          />
-                          <div className="absolute inset-0 bg-black/45 transition-colors duration-500 group-hover:bg-black/55" />
-                        </div>
-                      ) : (
-                        <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center text-zinc-500 text-xs font-mono uppercase tracking-widest">
-                          No Image Configured
-                        </div>
-                      )}
-                      
-                      <div className="absolute inset-0 flex flex-col items-center justify-center p-4 z-10">
-                        <h3 className="font-display text-xl font-black text-white tracking-wider uppercase drop-shadow-md">
-                          SHOP {currentCollection.title}
-                        </h3>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                 {/* Inputs Form */}
-                <div className="md:col-span-7 rounded-3xl border border-border bg-card p-6 shadow-soft space-y-4">
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Collection Title</label>
-                      <input
-                        required
-                        value={currentCollection.title}
-                        onChange={(e) => updateCollectionField(selectedCollectionIdx, "title", e.target.value)}
-                        className="input-field"
-                        placeholder="e.g. SPORTS"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Link URL</label>
-                      <input
-                        required
-                        value={currentCollection.to || "/shop"}
-                        onChange={(e) => updateCollectionField(selectedCollectionIdx, "to", e.target.value)}
-                        className="input-field"
-                        placeholder="e.g. /shop"
-                      />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Collection Filter (Optional)</label>
-                      <input
-                        value={currentCollection.search?.collection || ""}
-                        onChange={(e) => updateCollectionField(selectedCollectionIdx, "search", { collection: e.target.value })}
-                        className="input-field"
-                        placeholder="e.g. Sports (leave empty to use title)"
-                      />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Background Image</label>
-                      <div className="flex flex-col sm:flex-row gap-4 items-center">
-                        <input
-                          required
-                          value={currentCollection.bg || ""}
-                          onChange={(e) => updateCollectionField(selectedCollectionIdx, "bg", e.target.value)}
-                          className="input-field flex-1"
-                          placeholder="Image URL (e.g. https://...)"
-                        />
-                        <label className="flex h-11 px-4 items-center justify-center rounded-xl border border-dashed border-border hover:border-primary bg-muted/20 hover:bg-muted/40 transition text-xs font-bold cursor-pointer whitespace-nowrap gap-1">
-                          <Image className="h-4 w-4" />
-                          <span>Upload from Device</span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="sr-only"
-                            onChange={(e) => handleCollectionFileChange(e, selectedCollectionIdx)}
-                          />
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })()}
-        </div>
-
-        {/*  Collage Section Config */}
-        <div id="promise-collage" className="space-y-6 pt-6 border-t border-border scroll-mt-24 font-sans">
-          <div className="flex items-center justify-between">
-            <h2 className="font-display text-lg font-bold">
-              Promise Section Collage Cards
-            </h2>
-            <button
-              onClick={addPromiseBanner}
-              className="flex items-center gap-1.5 rounded-full border border-border bg-background px-4 py-2 text-xs font-bold uppercase transition hover:bg-accent cursor-pointer"
-            >
-              <Plus className="h-4 w-4" /> Add Collage Card
-            </button>
-          </div>
-
-          {/* Banner Tabs Selector with Delete Buttons */}
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none border-b border-border/60">
-            {promiseCollage.map((banner, idx) => (
-              <div key={banner.key || idx} className="flex items-center gap-1 bg-card rounded-full border border-border px-3 py-1.5 shadow-sm">
-                <button
-                  type="button"
-                  onClick={() => setSelectedPromiseIdx(idx)}
-                  className={cn(
-                    "text-xs font-bold transition-all cursor-pointer whitespace-nowrap",
-                    selectedPromiseIdx === idx ? "text-primary" : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  {banner.title || `Card #${idx + 1}`}
-                </button>
-                {promiseCollage.length > 1 && (
-                  <button
-                    onClick={() => removePromiseBanner(idx)}
-                    className="text-muted-foreground hover:text-destructive transition p-0.5 rounded-full hover:bg-muted cursor-pointer"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {(() => {
-            const currentBanner = promiseCollage[selectedPromiseIdx] || { title: "", to: "", bg: "", desc: "", cta: "", subtitle: "" };
-
-            return (
-              <div className="grid gap-6 md:grid-cols-12 items-stretch pt-2">
-                {/* Live Preview Card */}
-                <div className="md:col-span-5 flex flex-col justify-between rounded-3xl border border-border bg-card p-6 shadow-soft space-y-4">
-                  <div>
-                    <span className="font-display text-xs font-extrabold text-primary uppercase tracking-wider block mb-3">Live Preview Collage</span>
-                    
-                    {/* Dynamic collage preview block */}
-                    <div className="w-full bg-[#0b0a0a] p-2 rounded-2xl border border-black/5 shadow-md min-h-[180px] flex items-center justify-center relative overflow-hidden">
-                      <div className="grid grid-cols-12 grid-rows-6 gap-1 absolute inset-0 w-full h-full opacity-65 z-0 p-2">
-                        {promiseCollage.map((item, idx) => {
-                          const gridSpans = [
-                            "col-span-4 row-span-4",
-                            "col-span-3 row-span-6",
-                            "col-span-5 row-span-3",
-                            "col-span-5 row-span-3",
-                            "col-span-4 row-span-2"
-                          ];
-                          const spanClass = gridSpans[idx % gridSpans.length];
-                          return (
-                            <div
-                              key={item.key || idx}
-                              onClick={() => setSelectedPromiseIdx(idx)}
-                              className={cn(
-                                "relative overflow-hidden bg-stone-950 border transition cursor-pointer rounded-md",
-                                spanClass,
-                                selectedPromiseIdx === idx ? "border-primary ring-1 ring-primary/45 z-10" : "border-white/5 hover:border-white/20"
-                              )}
-                            >
-                              {item.bg ? (
-                                <img
-                                  src={getImageUrl(item.bg)}
-                                  alt=""
-                                  className="w-full h-full object-cover filter grayscale"
-                                />
-                              ) : (
-                                <div className="w-full h-full bg-stone-900 flex items-center justify-center text-[6px] text-zinc-500">Slot {idx+1}</div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                      <div className="relative z-10 pointer-events-none text-center bg-black/60 p-3 rounded-xl border border-white/5 backdrop-blur-xs text-white">
-                        <span className="text-[10px] uppercase font-bold tracking-wider block">Mosaic Grid Preview</span>
-                        <p className="text-[8px] text-stone-300 mt-0.5 max-w-[140px]">Click any image slot in the background grid to select and edit its details.</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Inputs Form */}
-                <div className="md:col-span-7 rounded-3xl border border-border bg-card p-6 shadow-soft space-y-4">
-                  {promiseCollage.length > 0 ? (
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div>
-                        <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Title (Header)</label>
-                        <input
-                          required
-                          value={currentBanner.title || ""}
-                          onChange={(e) => updatePromiseField(selectedPromiseIdx, "title", e.target.value)}
-                          className="input-field"
-                          placeholder="e.g. Feoro Woman Power"
-                        />
-                      </div>
-                      <div>
-                        <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Subtitle (Eyebrow)</label>
-                        <input
-                          value={currentBanner.subtitle || ""}
-                          onChange={(e) => updatePromiseField(selectedPromiseIdx, "subtitle", e.target.value)}
-                          className="input-field"
-                          placeholder="e.g. CONFIDENCE (Optional)"
-                        />
-                      </div>
-                      <div className="sm:col-span-2">
-                        <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Description (Detail Text)</label>
-                        <textarea
-                          rows={2}
-                          value={currentBanner.desc || ""}
-                          onChange={(e) => updatePromiseField(selectedPromiseIdx, "desc", e.target.value)}
-                          className="input-field py-2"
-                          placeholder="Short tagline or detailed text... (Optional)"
-                        />
-                      </div>
-                      <div>
-                        <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">CTA (Button Text)</label>
-                        <input
-                          value={currentBanner.cta || ""}
-                          onChange={(e) => updatePromiseField(selectedPromiseIdx, "cta", e.target.value)}
-                          className="input-field"
-                          placeholder="e.g. Explore (Optional)"
-                        />
-                      </div>
-                      <div>
-                        <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Link URL</label>
-                        <input
-                          required
-                          value={currentBanner.to || ""}
-                          onChange={(e) => updatePromiseField(selectedPromiseIdx, "to", e.target.value)}
-                          className="input-field"
-                          placeholder="e.g. /shop"
-                        />
-                      </div>
-                      <div className="sm:col-span-2">
-                        <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Background Image</label>
-                        <div className="flex flex-col sm:flex-row gap-4 items-center">
-                          <input
-                            required
-                            value={currentBanner.bg || ""}
-                            onChange={(e) => updatePromiseField(selectedPromiseIdx, "bg", e.target.value)}
-                            className="input-field flex-1"
-                            placeholder="Image URL (e.g. https://...)"
-                          />
-                          <label className="flex h-11 px-4 items-center justify-center rounded-xl border border-dashed border-border hover:border-primary bg-muted/20 hover:bg-muted/40 transition text-xs font-bold cursor-pointer whitespace-nowrap gap-1">
-                            <Image className="h-4 w-4" />
-                            <span>Upload from Device</span>
-                            <input
-                              type="file"
-                              accept="image/*"
-                              className="sr-only"
-                              onChange={(e) => handlePromiseFileChange(e, selectedPromiseIdx)}
-                            />
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-6 text-muted-foreground text-sm font-medium">Click "Add Collage Card" above to build your promise section collage grid!</div>
-                  )}
-                </div>
-              </div>
-            );
-          })()}
-        </div>
-
-        {/* Auth Page Customizations Section */}
-        <div id="auth-page" className="space-y-6 pt-6 border-t border-border scroll-mt-24 font-sans">
-          <div className="flex items-center justify-between">
-            <h2 className="font-display text-lg font-bold">
-              Auth Page Configuration
-            </h2>
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-12 items-stretch pt-2">
-            {/* Live Previews */}
-            <div className="md:col-span-4 flex flex-col justify-between rounded-3xl border border-border bg-card p-5 shadow-soft space-y-4">
-              <div>
-                <span className="font-display text-xs font-extrabold text-primary uppercase tracking-wider block mb-3">Live Slides Previews</span>
-                
-                <div className="space-y-3">
-                  {authSettings.slides?.map((slide: any, idx: number) => (
-                    <div key={idx} className="relative group overflow-hidden rounded-2xl bg-zinc-900 border border-border h-[100px] flex flex-col justify-end p-3">
-                      {slide.image ? (
-                        <div className="absolute inset-0 h-full w-full">
-                          <img
-                            src={getImageUrl(slide.image)}
-                            alt={`Slide ${idx + 1} Preview`}
-                            className="h-full w-full object-cover brightness-[0.7] saturate-[0.8]"
-                          />
-                          <div className="absolute inset-0 bg-black/40" />
-                        </div>
-                      ) : (
-                        <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center text-zinc-500 text-[9px] font-mono uppercase tracking-wider text-center px-2">
-                          Fallback Hero / Product Cover
-                        </div>
-                      )}
-                      <div className="relative z-10 text-white space-y-0.5">
-                        <span className="text-[7px] bg-primary/20 text-primary border border-primary/20 px-1.5 py-0.5 rounded-full uppercase font-bold tracking-wider w-fit block">Slide {idx + 1}</span>
-                        <h4 className="font-display text-xs font-black text-white leading-tight mt-0.5 line-clamp-1">{slide.title || "Title"}</h4>
-                        <p className="text-[8px] text-zinc-300 line-clamp-1">{slide.subtitle || "Subtitle..."}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Inputs Form */}
-            <div className="md:col-span-8 rounded-3xl border border-border bg-card p-5 shadow-soft space-y-4">
-              <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1">
-                {authSettings.slides?.map((slide: any, idx: number) => (
-                  <div key={idx} className={cn("space-y-3 pb-4", idx < 2 && "border-b border-border/80")}>
-                    <h3 className="text-xs font-black uppercase text-primary tracking-wider">Auth Visual Slide {idx + 1}</h3>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div>
-                        <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Heading Title</label>
-                        <input
-                          required
-                          value={slide.title}
-                          onChange={(e) => {
-                            const newSlides = [...authSettings.slides];
-                            newSlides[idx] = { ...newSlides[idx], title: e.target.value };
-                            setAuthSettings((prev: any) => ({ ...prev, slides: newSlides }));
-                          }}
-                          className="input-field"
-                          placeholder="e.g. Discover Your Style"
-                        />
-                      </div>
-                      <div>
-                        <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Background Image</label>
-                        <div className="flex gap-2 items-center">
-                          <input
-                            value={slide.image || ""}
-                            onChange={(e) => {
-                              const newSlides = [...authSettings.slides];
-                              newSlides[idx] = { ...newSlides[idx], image: e.target.value };
-                              setAuthSettings((prev: any) => ({ ...prev, slides: newSlides }));
-                            }}
-                            className="input-field flex-1"
-                            placeholder="Image URL or blank"
-                          />
-                          <label className="flex h-11 px-3 items-center justify-center rounded-xl border border-dashed border-border hover:border-primary bg-muted/20 hover:bg-muted/40 transition text-xs font-bold cursor-pointer whitespace-nowrap gap-1">
-                            <Image className="h-4 w-4" />
-                            <span>Upload</span>
-                            <input
-                              type="file"
-                              accept="image/*"
-                              className="sr-only"
-                              onChange={(e) => handleAuthFileChange(e, idx)}
-                            />
-                          </label>
-                        </div>
-                      </div>
-                      <div className="sm:col-span-2">
-                        <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Detail Description</label>
-                        <textarea
-                          rows={2}
-                          value={slide.subtitle}
-                          onChange={(e) => {
-                            const newSlides = [...authSettings.slides];
-                            newSlides[idx] = { ...newSlides[idx], subtitle: e.target.value };
-                            setAuthSettings((prev: any) => ({ ...prev, slides: newSlides }));
-                          }}
-                          className="input-field py-2"
-                          placeholder="Short marketing text..."
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
+        <AuthConfig
+          authSettings={authSettings}
+          setAuthSettings={setAuthSettings}
+          handleAuthFileChange={handleAuthFileChange}
+          getImageUrl={getImageUrl}
+        />
 
         <div className="flex justify-end pt-4">
           <button

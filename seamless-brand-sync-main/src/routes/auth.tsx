@@ -6,8 +6,7 @@ import { toast } from "sonner";
 import { useStore } from "@/lib/store";
 import { apiClient } from "@/lib/api";
 import { cn, getImageUrl } from "@/lib/utils";
-import logo from "@/assets/mocs-logo.png";
-import { useSignIn, useSignUp } from "@clerk/clerk-react";
+import { AuthSlideshow } from "@/components/AuthSlideshow";
 
 type AuthSearch = { redirect?: string; mode?: "login" | "signup" };
 
@@ -59,25 +58,7 @@ function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Email verification step for Clerk Sign Up
-  const [verifyingEmail, setVerifyingEmail] = useState(false);
-  const [verificationCode, setVerificationCode] = useState("");
 
-  // Clerk hooks
-  const isClerkEnabled = 
-    !!(import.meta as any).env?.VITE_CLERK_PUBLISHABLE_KEY && 
-    (import.meta as any).env?.VITE_CLERK_PUBLISHABLE_KEY !== "pk_test_ZmFrZS1jbGVyay1rZXktNTAuY2xlcmsuYWNjb3VudHMuZGV2JA==";
-
-  const clerkSignIn = isClerkEnabled ? useSignIn() : { signIn: null, isLoaded: true, setActive: null };
-  const clerkSignUp = isClerkEnabled ? useSignUp() : { signUp: null, isLoaded: true, setActive: null };
-
-  const signIn = clerkSignIn.signIn;
-  const signInLoaded = clerkSignIn.isLoaded;
-  const setSignInActive = clerkSignIn.setActive;
-
-  const signUp = clerkSignUp.signUp;
-  const signUpLoaded = clerkSignUp.isLoaded;
-  const setSignUpActive = clerkSignUp.setActive;
 
   // Dynamic Auth Visual Slides Config
   const [authSlides, setAuthSlides] = useState<any[]>([
@@ -86,16 +67,7 @@ function AuthPage() {
     { image: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?q=80&w=800", title: "Crafted For Comfort", subtitle: "Every pair is built for active lifestyles and durable comfort." }
   ]);
 
-  // Continuous auto-slideshow state (runs in the background independently of Log In/Sign Up state)
-  const [activeSlide, setActiveSlide] = useState(0);
 
-  // Auto-slide transition effect every 5 seconds
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveSlide((prev) => (prev + 1) % authSlides.length);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [authSlides.length]);
 
   // Load Auth custom settings / slideshow fallbacks / product fallbacks
   useEffect(() => {
@@ -171,32 +143,13 @@ function AuthPage() {
 
   // Social Login handler
   const handleSocialLogin = async (strategy: "oauth_google" | "oauth_facebook" | "oauth_apple") => {
-    if (!isClerkEnabled) {
-      toast.info("Configure Clerk in your .env file to enable social logins.");
-      return;
-    }
-
-    if (!signInLoaded || !signIn) {
-      toast.error("Clerk is still loading, please wait.");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      await signIn.authenticateWithRedirect({
-        strategy,
-        redirectUrl: "/",
-        redirectUrlComplete: "/",
-      });
-    } catch (err: any) {
-      setErrorModal({
-        isOpen: true,
-        title: "Social Authentication Failed",
-        message: cleanErrorMessage(err)
-      });
-      setLoading(false);
-    }
+    setErrorModal({
+      isOpen: true,
+      title: "Social Logins Disabled",
+      message: "Configure Clerk in your .env file to enable social logins."
+    });
   };
+
 
   // Submit Handler
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -209,77 +162,45 @@ function AuthPage() {
     const confirmPassword = String(fd.get("confirmPassword") ?? "");
 
     if (!email) {
-      toast.error("Please enter your email address", { id: "auth-toast" });
+      setErrorModal({
+        isOpen: true,
+        title: "Validation Error",
+        message: "Please enter your email address"
+      });
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      toast.error("Please enter a valid email address", { id: "auth-toast" });
+      setErrorModal({
+        isOpen: true,
+        title: "Validation Error",
+        message: "Please enter a valid email address"
+      });
       return;
     }
 
     if (password.length < 8) {
-      toast.error("Password must be at least 8 characters", { id: "auth-toast" });
+      setErrorModal({
+        isOpen: true,
+        title: "Validation Error",
+        message: "Password must be at least 8 characters"
+      });
       return;
     }
 
     if (mode === "signup" && password !== confirmPassword) {
-      toast.error("Passwords do not match", { id: "auth-toast" });
+      setErrorModal({
+        isOpen: true,
+        title: "Validation Error",
+        message: "Passwords do not match"
+      });
       return;
     }
 
     setLoading(true);
 
-    // 1. Clerk Flow
-    if (isClerkEnabled) {
-      try {
-        if (mode === "login") {
-          if (!signInLoaded || !signIn) throw new Error("Clerk not ready");
-          const result = await signIn.create({ identifier: email, password });
-          if (result.status === "complete") {
-            if (setSignInActive) {
-              await setSignInActive({ session: result.createdSessionId });
-            }
-            toast.success("Welcome back!", { id: "auth-toast" });
-          } else {
-            console.warn("Unexpected login result status:", result.status);
-            toast.error("Login verification required.", { id: "auth-toast" });
-          }
-        } else {
-          if (!signUpLoaded || !signUp) throw new Error("Clerk not ready");
-          const result = await signUp.create({
-            emailAddress: email,
-            password,
-            firstName,
-            lastName,
-          });
-
-          if (result.status === "complete") {
-            if (setSignUpActive) {
-              await setSignUpActive({ session: result.createdSessionId });
-            }
-            toast.success("Account created successfully!", { id: "auth-toast" });
-          } else {
-            // Clerk requires email address OTP verification by default
-            await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
-            setVerifyingEmail(true);
-            toast.success("Verification code sent to your email!", { id: "auth-toast" });
-          }
-        }
-      } catch (err: any) {
-        setErrorModal({
-          isOpen: true,
-          title: mode === "login" ? "Login Failed" : "Registration Failed",
-          message: cleanErrorMessage(err)
-        });
-      } finally {
-        setLoading(false);
-      }
-      return;
-    }
-
-    // 2. Custom MERN local database login flow
+    // Custom MERN local database login flow
     try {
       const name = `${firstName} ${lastName}`.trim() || "Local User";
       const res =
@@ -307,173 +228,16 @@ function AuthPage() {
     }
   };
 
-  // Clerk Email Verification Submission
-  const handleVerifyEmail = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!signUpLoaded || !signUp) return;
-
-    setLoading(true);
-    try {
-      if (!signUp) throw new Error("Clerk Sign-up not ready");
-      const result = await signUp.attemptEmailAddressVerification({
-        code: verificationCode,
-      });
-
-      if (result.status === "complete") {
-        if (setSignUpActive) {
-          await setSignUpActive({ session: result.createdSessionId });
-        }
-        toast.success("Account created successfully!", { id: "auth-toast" });
-        setVerifyingEmail(false);
-      } else {
-        setErrorModal({
-          isOpen: true,
-          title: "Verification Failed",
-          message: "Invalid verification code. Please check and try again."
-        });
-      }
-    } catch (err: any) {
-      setErrorModal({
-        isOpen: true,
-        title: "Verification Failed",
-        message: cleanErrorMessage(err)
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Motion animation config for opposing horizontal slideshow transitions
-  const slideVariants = {
-    enter: {
-      x: 80,
-      opacity: 0,
-    },
-    center: {
-      x: 0,
-      opacity: 1,
-    },
-    exit: {
-      x: -80,
-      opacity: 0,
-    },
-  };
-
   return (
     <div className="mx-auto flex max-w-3xl items-center justify-center p-1.5 font-sans bg-[#f3ebd7]/40 rounded-[26px] border border-stone-200/35 shadow-xs my-1 sm:my-2">
       <div className="w-full rounded-[22px] bg-white border border-stone-200/60 flex flex-col md:flex-row overflow-hidden shadow-card">
         
         {/* Left Visual Pane - Kept side-by-side even on mobile via proportional sizing/shrinkage */}
-        <div className="relative w-full md:w-[45%] h-[150px] md:h-auto overflow-hidden border-b md:border-b-0 md:border-r border-stone-150 select-none bg-stone-950">
-          <AnimatePresence initial={false}>
-            <motion.div
-              key={activeSlide}
-              variants={slideVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
-              className="absolute inset-0 h-full w-full"
-            >
-              {/* Cover Background Image */}
-              <img
-                src={getImageUrl(authSlides[activeSlide]?.image)}
-                alt="Auth visual"
-                className="absolute inset-0 h-full w-full object-cover filter brightness-[0.7] saturate-[0.85]"
-              />
-
-              {/* Glowing Dark Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/35 to-black/60 pointer-events-none" />
-
-              {/* Title & Description overlay on Desktop/Tablet viewports */}
-              <div className="absolute bottom-8 left-8 right-8 z-10 hidden md:block">
-                <motion.h2
-                  initial={{ y: 15, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.15, duration: 0.4 }}
-                  className="font-display text-2xl font-black text-white leading-tight"
-                >
-                  {authSlides[activeSlide]?.title}
-                </motion.h2>
-                <motion.p
-                  initial={{ y: 15, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.25, duration: 0.4 }}
-                  className="mt-2 text-xs leading-relaxed text-zinc-300 max-w-[90%]"
-                >
-                  {authSlides[activeSlide]?.subtitle}
-                </motion.p>
-
-                {/* Slideshow dot indicators */}
-                <div className="mt-5 flex gap-1.5">
-                  {authSlides.map((_, idx) => (
-                    <span
-                      key={idx}
-                      className={cn(
-                        "h-1 rounded-full transition-all duration-300",
-                        activeSlide === idx ? "w-6 bg-primary" : "w-2 bg-neutral-600"
-                      )}
-                    />
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          </AnimatePresence>
-
-          {/* Logo Brand Overlay */}
-          <div className="absolute top-6 left-6 z-20 flex items-center gap-2 drop-shadow-md">
-            <img src={logo} alt="MOCS" className="h-6.5 w-auto" />
-          </div>
-        </div>
+        <AuthSlideshow authSlides={authSlides} />
 
         {/* Right Form Pane - Light Theme */}
         <div className="w-full md:w-[55%] p-5 sm:p-7 flex flex-col justify-center text-stone-900 bg-white">
-          
-          {/* Email Verification Box */}
-          {verifyingEmail ? (
-            <div className="space-y-5 animate-in fade-in duration-300">
-              <div>
-                <h1 className="font-display text-2xl font-black tracking-tight text-stone-900">Verify Your Email</h1>
-                <p className="mt-1.5 text-xs text-stone-500">
-                  We've sent a 6-digit confirmation code. Please enter it below.
-                </p>
-              </div>
-
-              <form onSubmit={handleVerifyEmail} className="space-y-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Verification Code</label>
-                  <label className="flex items-center gap-3 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 focus-within:border-primary focus-within:bg-white transition duration-200">
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. 123456"
-                      value={verificationCode}
-                      onChange={(e) => setVerificationCode(e.target.value)}
-                      className="w-full bg-transparent text-sm font-semibold tracking-widest outline-none text-stone-900 placeholder-stone-400"
-                    />
-                  </label>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full py-3.5 rounded-xl font-bold uppercase tracking-wider text-white bg-primary hover:bg-primary-glow active:scale-[0.98] transition-all disabled:opacity-60 cursor-pointer shadow-sm shadow-orange-500/10"
-                >
-                  {loading ? "Verifying..." : "Confirm & Activate"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setVerifyingEmail(false)}
-                  className="w-full text-center text-xs font-semibold text-stone-400 hover:text-stone-600 transition"
-                >
-                  Back to Sign Up
-                </button>
-              </form>
-            </div>
-          ) : (
-            <>
-              {/* Sliding Tab Mode Selector - Light styling */}
+                       {/* Sliding Tab Mode Selector - Light styling */}
               <div className="flex mb-4">
                 <div className="relative flex rounded-full bg-stone-100 border border-stone-200/80 p-0.5 text-[11px] font-bold w-fit">
                   {(["signup", "login"] as const).map((m) => (
@@ -681,15 +445,12 @@ function AuthPage() {
                 </button>
               </div>
 
-              {/* Footer Policy text */}
               <p className="mt-4 text-center text-[10px] text-stone-400 leading-normal font-medium">
                 By continuing you agree to the MOCS{" "}
                 <Link to="/about" className="font-semibold text-primary underline">Terms of Use</Link> and{" "}
                 <a href="/about" className="font-semibold text-primary underline">Privacy Policy</a>.
               </p>
-            </>
-          )}
-        </div>
+            </div>
       </div>
 
       {/* Error Modal */}

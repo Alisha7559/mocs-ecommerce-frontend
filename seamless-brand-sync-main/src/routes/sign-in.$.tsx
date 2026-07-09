@@ -1,14 +1,9 @@
-import { SignIn } from "@clerk/tanstack-react-start";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/sign-in/$")({
   component: Page,
 });
 
 function Page() {
-  return (
-    <div className="flex min-h-screen items-center justify-center">
-      <SignIn />
-    </div>
-  );
+  return <Navigate to="/auth" search={{ mode: "login" }} />;
 }

@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useBlocker } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Lock, Check, ShieldCheck, Building2, Truck, CreditCard } from "lucide-react";
 import { toast } from "sonner";
@@ -75,6 +75,39 @@ function Checkout() {
   const navigate = useNavigate();
   const { cart, cartTotal, clearCart, user, setUser } = useStore();
   const [paying, setPaying] = useState(false);
+  const [isRepayMode, setIsRepayMode] = useState(false);
+  const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
+
+  const blocker = useBlocker({
+    shouldBlockFn: () => isRepayMode,
+    withResolver: true,
+  });
+
+  const handleConfirmCancelOrder = async () => {
+    if (createdOrderId) {
+      try {
+        toast.loading("Cancelling order...", { id: "cancel-order-toast" });
+        await apiClient.orders.cancel(createdOrderId, "Cancelled during checkout page exit");
+        await apiClient.payments.cancel(createdOrderId);
+        toast.success("Order cancelled successfully", { id: "cancel-order-toast" });
+      } catch (err: any) {
+        console.error(err);
+        toast.error("Failed to cancel order", { id: "cancel-order-toast" });
+      }
+    }
+    setIsRepayMode(false);
+    setCreatedOrderId(null);
+    if (blocker.status === "blocked") {
+      blocker.proceed();
+    }
+  };
+
+  const handleKeepOrder = () => {
+    if (blocker.status === "blocked") {
+      blocker.reset();
+    }
+  };
+
   const [paymentMethod, setPaymentMethod] = useState<"card" | "upi" | "netbanking" | "cod">("netbanking");
   const [tempAddress, setTempAddress] = useState<any>(null);
   const [tempEmail, setTempEmail] = useState("");
@@ -196,6 +229,8 @@ function Checkout() {
     const finalAddress = addr || tempAddress;
     const finalEmail = email || tempEmail;
     setPaying(true);
+    setIsRepayMode(false);
+    setCreatedOrderId(null);
 
     if (method === "cod") {
       try {
@@ -304,6 +339,8 @@ function Checkout() {
             setPaying(false);
             toast.error("Payment cancelled");
             if (orderInfo && orderInfo.internalOrderId) {
+              setIsRepayMode(true);
+              setCreatedOrderId(orderInfo.internalOrderId);
               try {
                 await apiClient.payments.cancel(orderInfo.internalOrderId);
               } catch (e) {
@@ -480,7 +517,7 @@ function Checkout() {
             disabled={paying}
             className="flex w-full items-center justify-center gap-2 rounded-full bg-primary py-4 text-sm font-bold uppercase tracking-wide text-primary-foreground transition hover:bg-primary-glow disabled:opacity-60"
           >
-            <Lock className="h-4 w-4" /> {paying ? "Processing…" : `Proceed to Pay ₹${total}`}
+            <Lock className="h-4 w-4" /> {paying ? "Processing…" : isRepayMode ? `Proceed to Repay ₹${total}` : `Proceed to Pay ₹${total}`}
           </button>
         </form>
 
@@ -525,6 +562,37 @@ function Checkout() {
       </div>
 
       {/* Options Modal Removed: Layout is Inline Radio Buttons */}
+
+      {/* Route Exit Confirmation Modal */}
+      {blocker.status === "blocked" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-card space-y-4 text-left animate-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-3 text-destructive">
+              <div className="rounded-full bg-destructive/10 p-2">
+                <ShieldCheck className="h-6 w-6" />
+              </div>
+              <h3 className="font-display text-lg font-bold text-foreground">Cancel Order?</h3>
+            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Without completing payment, this order will not be completed. Would you like to cancel this order?
+            </p>
+            <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:justify-end">
+              <button
+                onClick={handleKeepOrder}
+                className="rounded-full border border-border bg-background px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition hover:bg-accent cursor-pointer"
+              >
+                No, Keep Order
+              </button>
+              <button
+                onClick={handleConfirmCancelOrder}
+                className="rounded-full border border-destructive/30 bg-destructive/10 text-destructive px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition hover:bg-destructive/20 cursor-pointer"
+              >
+                Yes, Cancel Order
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
