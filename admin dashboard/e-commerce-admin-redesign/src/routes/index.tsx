@@ -62,9 +62,10 @@ function Dashboard() {
   useEffect(() => {
     async function fetchDashboardData() {
       try {
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
         let token = localStorage.getItem("mocs_admin_token");
         if (!token) {
-          const loginRes = await fetch("http://localhost:5000/api/auth/login", {
+          const loginRes = await fetch(`${API_BASE_URL}/api/auth/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email: "admin@mocs.com", password: "mocsadmin123" }),
@@ -77,7 +78,7 @@ function Dashboard() {
         }
 
         if (token) {
-          const res = await fetch("http://localhost:5000/api/payments/stats", {
+          const res = await fetch(`${API_BASE_URL}/api/payments/stats`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (res.ok) {
