@@ -101,6 +101,8 @@ interface ProductFormModalProps {
   setDescription: (val: string) => void;
   sizesStr: string;
   setSizesStr: (val: string) => void;
+  outOfStockSizesStr: string;
+  setOutOfStockSizesStr: (val: string) => void;
   shades: any[];
   setShades: (shades: any[]) => void;
   activeShadeIndex: number;
@@ -134,6 +136,8 @@ export function ProductFormModal({
   setDescription,
   sizesStr,
   setSizesStr,
+  outOfStockSizesStr,
+  setOutOfStockSizesStr,
   shades,
   setShades,
   activeShadeIndex,
@@ -266,6 +270,15 @@ export function ProductFormModal({
                 onChange={(e) => setSizesStr(e.target.value)}
                 className="input-field"
                 placeholder="e.g. 7,8,9,10,11,12"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Out of Stock Sizes (Comma-separated)</label>
+              <input
+                value={outOfStockSizesStr}
+                onChange={(e) => setOutOfStockSizesStr(e.target.value)}
+                className="input-field border-amber-500/20 focus:border-amber-500"
+                placeholder="e.g. 8,10 (leave blank if all in stock)"
               />
             </div>
             <div className="sm:col-span-3">

@@ -18,7 +18,7 @@ export function QualityPromise({ collage }: { collage?: any[] }) {
 
   return (
     <section
-      className="relative overflow-hidden h-[90vh] w-full flex items-center justify-center text-white border-y border-black bg-[#0B0A0A]"
+      className="relative overflow-hidden h-[90vh] w-full flex items-center justify-center text-white bg-[#0B0A0A]"
       style={{ clipPath: "inset(0 0 0 0)" }}
     >
       {/* Viewport-Fixed Background Grid Collage filled completely edge-to-edge with light blur */}

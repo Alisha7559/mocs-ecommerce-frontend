@@ -126,6 +126,7 @@ function AdminProducts() {
   const [additionalImages, setAdditionalImages] = useState<{ label: string; url: string }[]>([]);
   const [description, setDescription] = useState("");
   const [sizesStr, setSizesStr] = useState("7,8,9,10,11,12");
+  const [outOfStockSizesStr, setOutOfStockSizesStr] = useState("");
   const [isPublished, setIsPublished] = useState(true);
   const [isNewProduct, setIsNewProduct] = useState(false);
   const [isTrending, setIsTrending] = useState(false);
@@ -202,6 +203,7 @@ function AdminProducts() {
     setCategoryId(categories[0]?._id || "");
     setDescription("");
     setSizesStr("7,8,9,10,11,12");
+    setOutOfStockSizesStr("");
     setIsPublished(true);
     setIsNewProduct(false);
     setIsTrending(false);
@@ -241,6 +243,7 @@ function AdminProducts() {
     setCategoryId(product.category?._id || product.category || "");
     setDescription(product.description || "");
     setSizesStr(product.sizes ? product.sizes.join(",") : "");
+    setOutOfStockSizesStr(product.outOfStockSizes ? product.outOfStockSizes.join(",") : "");
     setIsPublished(product.isPublished ?? true);
     setIsNewProduct(product.isNew ?? false);
     setIsTrending(product.isTrending ?? false);
@@ -445,6 +448,11 @@ function AdminProducts() {
         .map(s => Number(s.trim()))
         .filter(s => !isNaN(s) && s > 0);
 
+      const outOfStockSizes = outOfStockSizesStr
+        .split(",")
+        .map(s => Number(s.trim()))
+        .filter(s => !isNaN(s) && s > 0);
+
       const baseSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
 
       for (const shade of shades) {
@@ -476,6 +484,7 @@ function AdminProducts() {
           colors: [{ name: shade.colorName || "Default", hex: shade.colorHex || "#000000", stock: Number(shade.stock) }],
           description: shadeDescription,
           sizes: shadeSizes,
+          outOfStockSizes,
           isPublished: isPublished,
           isNew: shade.isNew || false,
           isTrending: shade.isTrending || false,
@@ -665,7 +674,7 @@ function AdminProducts() {
                           className="h-12 w-12 rounded-xl object-cover bg-muted border border-border shrink-0"
                         />
                         <div className="min-w-0">
-                          <p className="font-semibold text-foreground truncate max-w-[180px] flex items-center gap-2">
+                          <p className="font-semibold text-foreground flex items-center gap-2 flex-wrap">
                             {p.name}
                             {p.isNew && (
                               <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[8px] font-semibold uppercase text-primary">
@@ -674,9 +683,77 @@ function AdminProducts() {
                             )}
                           </p>
                           <p className="text-[10px] font-bold text-primary tracking-wide">Art No: {p.artNumber || "N/A"}</p>
-                          <p className="text-xs text-muted-foreground truncate max-w-[180px] mt-0.5">
+                          <p className="text-xs text-muted-foreground mt-0.5">
                             Color: {p.colors?.[0]?.name || "Default"}
                           </p>
+                          {p.sizes && p.sizes.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-1.5 items-center">
+                              <span className="text-[10px] font-bold text-muted-foreground uppercase mr-1">Sizes:</span>
+                              {p.sizes.map((s: number) => {
+                                const isOos = p.outOfStockSizes?.includes(s);
+                                return (
+                                  <button
+                                    key={s}
+                                    type="button"
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      if (isOos) {
+                                        const updatedOos = (p.outOfStockSizes || []).filter((sz: number) => sz !== s);
+                                        try {
+                                          toast.loading(`Restoring size ${s}...`, { id: `restore-sz-${p._id}` });
+                                          await apiClient.products.update(p._id, { outOfStockSizes: updatedOos });
+                                          toast.success(`Size ${s} is now in stock!`, { id: `restore-sz-${p._id}` });
+                                          fetchData();
+                                        } catch (err: any) {
+                                          toast.error(err?.message || "Failed to update size stock", { id: `restore-sz-${p._id}` });
+                                        }
+                                      } else {
+                                        const updatedOos = [...(p.outOfStockSizes || []), s];
+                                        try {
+                                          toast.loading(`Marking size ${s} as Out of Stock...`, { id: `oos-sz-${p._id}` });
+                                          await apiClient.products.update(p._id, { outOfStockSizes: updatedOos });
+                                          toast.success(`Size ${s} marked as Out of Stock`, { id: `oos-sz-${p._id}` });
+                                          fetchData();
+                                        } catch (err: any) {
+                                          toast.error(err?.message || "Failed to update size stock", { id: `oos-sz-${p._id}` });
+                                        }
+                                      }
+                                    }}
+                                    className={cn(
+                                      "inline-flex h-5 items-center justify-center rounded-md px-1.5 text-[9px] font-bold uppercase transition-all cursor-pointer border",
+                                      isOos
+                                        ? "border-destructive/30 bg-destructive/10 text-destructive line-through hover:bg-destructive/20"
+                                        : "border-border bg-stone-50 text-foreground hover:border-primary hover:text-primary"
+                                    )}
+                                    title={isOos ? `Click to Restore size ${s} (mark in-stock)` : `Click to mark size ${s} as Out of Stock`}
+                                  >
+                                    {s}
+                                  </button>
+                                );
+                              })}
+
+                              {p.outOfStockSizes && p.outOfStockSizes.length > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    try {
+                                      toast.loading("Marking all sizes as in-stock...", { id: `restore-all-${p._id}` });
+                                      await apiClient.products.update(p._id, { outOfStockSizes: [] });
+                                      toast.success("All sizes marked as in-stock successfully!", { id: `restore-all-${p._id}` });
+                                      fetchData();
+                                    } catch (err: any) {
+                                      toast.error(err?.message || "Failed to update size stock", { id: `restore-all-${p._id}` });
+                                    }
+                                  }}
+                                  className="ml-1.5 inline-flex h-5 items-center justify-center rounded-full bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 px-2 text-[8px] font-extrabold uppercase border border-emerald-500/35 transition cursor-pointer"
+                                  title="Mark all sizes as In-Stock at once"
+                                >
+                                  Mark All In-Stock
+                                </button>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -849,6 +926,11 @@ function AdminProducts() {
                 <div>
                   <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Available Sizes (Comma-separated US numbers)</label>
                   <input required value={sizesStr} onChange={(e) => setSizesStr(e.target.value)} className="input-field" placeholder="e.g. 7, 8, 9, 10, 11, 12" />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Out of Stock Sizes (Comma-separated US numbers)</label>
+                  <input value={outOfStockSizesStr} onChange={(e) => setOutOfStockSizesStr(e.target.value)} className="input-field border-amber-500/20 focus:border-amber-500" placeholder="e.g. 8, 10 (leave empty if all sizes are in stock)" />
                 </div>
 
                 <div>

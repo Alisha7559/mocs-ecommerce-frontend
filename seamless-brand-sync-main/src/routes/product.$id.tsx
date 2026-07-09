@@ -24,6 +24,7 @@ import {
   type ProductView,
 } from "@/lib/products";
 import { useStore } from "@/lib/store";
+import { toast } from "sonner";
 import { ProductCard } from "@/components/ProductCard";
 import { Reveal, Stagger } from "@/components/Reveal";
 import { cn, getImageUrl } from "@/lib/utils";
@@ -50,9 +51,10 @@ export const Route = createFileRoute("/product/$id")({
           stock: p.stock || 0,
           image: getImageUrl(p.coverImage),
           colors: p.colors && p.colors.length > 0
-            ? p.colors.map((c: any) => ({ name: c.name, hex: c.hex }))
-            : [{ name: "Default", hex: "#000000" }],
+            ? p.colors.map((c: any) => ({ name: c.name, hex: c.hex, stock: c.stock }))
+            : [{ name: "Default", hex: "#000000", stock: p.stock }],
           sizes: p.sizes || [7, 8, 9, 10, 11, 12],
+          outOfStockSizes: p.outOfStockSizes || [],
           description: p.description,
           isNew: p.isNew,
           views: p.additionalImages && p.additionalImages.length > 0
@@ -220,6 +222,22 @@ function ProductDetail() {
   const [qty, setQty] = useState(1);
   const [zoom, setZoom] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
+  const [showSizePrompt, setShowSizePrompt] = useState(false);
+  const [sizePromptAction, setSizePromptAction] = useState<"cart" | "buy">("cart");
+
+  const currentVariantStock = useMemo(() => {
+    const variant = product.colors?.find((c: any) => c.name === color);
+    if (variant) {
+      return typeof variant.stock === "number" ? variant.stock : product.stock;
+    }
+    return product.stock;
+  }, [product, color]);
+
+  useEffect(() => {
+    if (qty > currentVariantStock) {
+      setQty(Math.max(1, currentVariantStock));
+    }
+  }, [currentVariantStock, qty]);
 
   // Responsive window resize state for slides per page in carousels
   const [windowWidth, setWindowWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1024);
@@ -352,7 +370,17 @@ function ProductDetail() {
       navigate({ to: "/auth", search: { redirect: `/product/${product.id}` } });
       return;
     }
-    addToCart(product, size ?? product.sizes[2], color, qty);
+    if (product.sizes && product.sizes.length > 0 && !size) {
+      const hasAnyInStock = product.sizes.some((s) => !product.outOfStockSizes?.includes(s));
+      if (!hasAnyInStock) {
+        toast.error("This product is completely out of stock in all sizes.");
+        return;
+      }
+      setSizePromptAction(buyNow ? "buy" : "cart");
+      setShowSizePrompt(true);
+      return;
+    }
+    addToCart(product, size || undefined, color, qty);
     if (buyNow) setCartOpen(true);
   };
 
@@ -496,21 +524,27 @@ function ProductDetail() {
               <button className="text-xs font-medium text-primary">Size guide</button>
             </div>
             <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
-              {product.sizes.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => setSize(s)}
-                  className={cn(
-                    "grid h-12 place-items-center rounded-xl border-2 text-sm font-semibold transition hover:border-primary",
-                    size === s
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border",
-                  )}
-                >
-                  {s}
-                </button>
-              ))}
+              {product.sizes.map((s) => {
+                const isOutOfStock = product.outOfStockSizes?.includes(s);
+                return (
+                  <button
+                    key={s}
+                    type="button"
+                    disabled={isOutOfStock}
+                    onClick={() => setSize(s)}
+                    className={cn(
+                      "grid h-12 place-items-center rounded-xl border-2 text-sm font-semibold transition",
+                      isOutOfStock
+                        ? "border-dashed border-stone-200/60 text-stone-400 line-through bg-stone-50/50 cursor-not-allowed opacity-50"
+                        : size === s
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border hover:border-primary",
+                    )}
+                  >
+                    {s}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -519,8 +553,12 @@ function ProductDetail() {
               <button
                 type="button"
                 aria-label="Decrease"
+                disabled={qty <= 1}
                 onClick={() => setQty((q) => Math.max(1, q - 1))}
-                className="grid h-12 w-12 place-items-center"
+                className={cn(
+                  "grid h-12 w-12 place-items-center transition",
+                  qty <= 1 ? "opacity-30 cursor-not-allowed" : "hover:text-primary"
+                )}
               >
                 <Minus className="h-4 w-4" />
               </button>
@@ -528,8 +566,12 @@ function ProductDetail() {
               <button
                 type="button"
                 aria-label="Increase"
+                disabled={qty >= currentVariantStock}
                 onClick={() => setQty((q) => q + 1)}
-                className="grid h-12 w-12 place-items-center"
+                className={cn(
+                  "grid h-12 w-12 place-items-center transition",
+                  qty >= currentVariantStock ? "opacity-30 cursor-not-allowed" : "hover:text-primary"
+                )}
               >
                 <Plus className="h-4 w-4" />
               </button>
@@ -547,17 +589,29 @@ function ProductDetail() {
           <div className="mt-5 flex flex-col gap-3 sm:flex-row">
             <button
               type="button"
+              disabled={currentVariantStock <= 0}
               onClick={() => handleAdd(false)}
-              className="group flex flex-1 items-center justify-center gap-2 rounded-full bg-primary py-4 text-sm font-bold uppercase tracking-wide text-primary-foreground transition-all hover:-translate-y-0.5 hover:bg-primary-glow hover:shadow-lift"
+              className={cn(
+                "group flex flex-1 items-center justify-center gap-2 rounded-full py-4 text-sm font-bold uppercase tracking-wide transition-all",
+                currentVariantStock <= 0
+                  ? "bg-stone-100 text-stone-400 border border-stone-200 cursor-not-allowed opacity-60"
+                  : "bg-primary text-primary-foreground hover:-translate-y-0.5 hover:bg-primary-glow hover:shadow-lift"
+              )}
             >
-              <ShoppingBag className="h-4 w-4" /> Add to Cart
+              <ShoppingBag className="h-4 w-4" /> {currentVariantStock <= 0 ? "Out of Stock" : "Add to Cart"}
             </button>
             <button
               type="button"
+              disabled={currentVariantStock <= 0}
               onClick={() => handleAdd(true)}
-              className="flex flex-1 items-center justify-center gap-2 rounded-full bg-secondary py-4 text-sm font-bold uppercase tracking-wide text-secondary-foreground transition-all hover:-translate-y-0.5"
+              className={cn(
+                "flex flex-1 items-center justify-center gap-2 rounded-full py-4 text-sm font-bold uppercase tracking-wide transition-all",
+                currentVariantStock <= 0
+                  ? "bg-stone-200 text-stone-400 cursor-not-allowed opacity-60"
+                  : "bg-secondary text-secondary-foreground hover:-translate-y-0.5"
+              )}
             >
-              Buy Now
+              {currentVariantStock <= 0 ? "Unavailable" : "Buy Now"}
             </button>
           </div>
 
@@ -731,6 +785,56 @@ function ProductDetail() {
       )}
 
 
+      {/* Select Size Prompt Modal */}
+      {showSizePrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-card space-y-5 text-left animate-in zoom-in-95 duration-200">
+            <div>
+              <h3 className="font-display text-lg font-bold text-foreground">Select Size</h3>
+              <p className="text-xs text-muted-foreground mt-1">Please select a size for {product.name} to continue.</p>
+            </div>
+            
+            <div className="grid grid-cols-4 gap-2">
+              {product.sizes.map((s) => {
+                const isOutOfStock = product.outOfStockSizes?.includes(s);
+                return (
+                  <button
+                    key={s}
+                    type="button"
+                    disabled={isOutOfStock}
+                    onClick={() => {
+                      setSize(s);
+                      setShowSizePrompt(false);
+                      addToCart(product, s, color, qty);
+                      if (sizePromptAction === "buy") {
+                        setCartOpen(true);
+                      }
+                    }}
+                    className={cn(
+                      "grid h-12 place-items-center rounded-xl border-2 text-sm font-semibold transition cursor-pointer",
+                      isOutOfStock
+                        ? "border-dashed border-stone-200/60 text-stone-400 line-through bg-stone-50/50 cursor-not-allowed opacity-50"
+                        : "border-border hover:border-primary hover:bg-primary/5"
+                    )}
+                  >
+                    {s}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex justify-end pt-2 border-t border-border">
+              <button
+                type="button"
+                onClick={() => setShowSizePrompt(false)}
+                className="rounded-full bg-secondary px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-secondary-foreground transition hover:bg-secondary/80 cursor-pointer"
+              >
+                Close Window
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

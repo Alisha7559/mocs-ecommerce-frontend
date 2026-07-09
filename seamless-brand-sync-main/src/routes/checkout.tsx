@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate, useBlocker } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { Lock, Check, ShieldCheck, Building2, Truck, CreditCard } from "lucide-react";
+import { useEffect, useState, useMemo } from "react";
+import { Lock, Check, ShieldCheck, Building2, Truck, CreditCard, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { useStore } from "@/lib/store";
 import { apiClient } from "@/lib/api";
@@ -77,6 +77,21 @@ function Checkout() {
   const [paying, setPaying] = useState(false);
   const [isRepayMode, setIsRepayMode] = useState(false);
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
+  const [errorModalMsg, setErrorModalMsg] = useState<string | null>(null);
+
+  const parsedErrorMessage = useMemo(() => {
+    if (!errorModalMsg) return "";
+    if (errorModalMsg.includes("API ")) {
+      try {
+        const jsonStr = errorModalMsg.substring(errorModalMsg.indexOf("{"));
+        const parsed = JSON.parse(jsonStr);
+        return parsed.message || errorModalMsg;
+      } catch (e) {
+        return errorModalMsg;
+      }
+    }
+    return errorModalMsg;
+  }, [errorModalMsg]);
 
   const blocker = useBlocker({
     shouldBlockFn: () => isRepayMode,
@@ -92,7 +107,7 @@ function Checkout() {
         toast.success("Order cancelled successfully", { id: "cancel-order-toast" });
       } catch (err: any) {
         console.error(err);
-        toast.error("Failed to cancel order", { id: "cancel-order-toast" });
+        setErrorModalMsg(err?.message || "Failed to cancel order");
       }
     }
     setIsRepayMode(false);
@@ -178,7 +193,7 @@ function Checkout() {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (cart.length === 0) {
-      toast.error("Your cart is empty");
+      setErrorModalMsg("Your cart is empty. Please add items to your cart before proceeding to checkout.");
       return;
     }
     const form = e.currentTarget;
@@ -253,7 +268,7 @@ function Checkout() {
           },
         });
       } catch (err: any) {
-        toast.error(err?.message || "Failed to place Cash on Delivery order");
+        setErrorModalMsg(err?.message || "Failed to place Cash on Delivery order");
       } finally {
         setPaying(false);
       }
@@ -263,7 +278,7 @@ function Checkout() {
     try {
       const ok = await loadRazorpay();
       if (!ok || !window.Razorpay) {
-        toast.error("Could not load Razorpay SDK. Please check your internet connection.");
+        setErrorModalMsg("Could not load Razorpay SDK. Please check your internet connection and try again.");
         setPaying(false);
         return;
       }
@@ -278,7 +293,7 @@ function Checkout() {
           color: i.color,
         })));
       } catch (err: any) {
-        toast.error(err?.message || "Failed to create order on server");
+        setErrorModalMsg(err?.message || "Failed to create order on server");
         setPaying(false);
         return;
       }
@@ -322,7 +337,7 @@ function Checkout() {
               },
             });
           } catch (err: any) {
-            toast.error("Payment verification failed");
+            setErrorModalMsg(err?.message || "Payment verification failed");
             navigate({
               to: "/payment-failed",
               search: {
@@ -337,7 +352,7 @@ function Checkout() {
         modal: {
           ondismiss: async () => {
             setPaying(false);
-            toast.error("Payment cancelled");
+            setErrorModalMsg("Payment checkout was cancelled by the user.");
             if (orderInfo && orderInfo.internalOrderId) {
               setIsRepayMode(true);
               setCreatedOrderId(orderInfo.internalOrderId);
@@ -352,7 +367,7 @@ function Checkout() {
       });
       rzp.open();
     } catch (err: any) {
-      toast.error(err?.message || "Something went wrong during payment initialization");
+      setErrorModalMsg(err?.message || "Something went wrong during payment initialization");
       setPaying(false);
     }
   };
@@ -588,6 +603,43 @@ function Checkout() {
                 className="rounded-full border border-destructive/30 bg-destructive/10 text-destructive px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition hover:bg-destructive/20 cursor-pointer"
               >
                 Yes, Cancel Order
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Error Message Modal Box */}
+      {errorModalMsg && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-lg rounded-3xl border border-destructive/20 bg-card p-6 shadow-card space-y-4 text-left animate-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-3 text-destructive">
+              <div className="rounded-full bg-destructive/10 p-2">
+                <AlertTriangle className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="font-display text-lg font-bold text-foreground">Transaction Failed</h3>
+                <p className="text-xs text-muted-foreground">The request could not be completed successfully</p>
+              </div>
+            </div>
+            
+            <p className="text-sm text-foreground/80 leading-relaxed font-semibold">
+              {parsedErrorMessage}
+            </p>
+
+            {/* Display raw JSON error output when available */}
+            {errorModalMsg.includes("{") && (
+              <div className="bg-stone-900 border border-stone-800 rounded-2xl p-4 text-[10px] font-mono text-zinc-300 max-h-48 overflow-y-auto break-all shadow-inner">
+                {errorModalMsg}
+              </div>
+            )}
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => setErrorModalMsg(null)}
+                className="rounded-full bg-secondary px-6 py-2.5 text-xs font-bold uppercase tracking-wider text-secondary-foreground transition hover:bg-secondary/80 cursor-pointer"
+              >
+                Close Window
               </button>
             </div>
           </div>

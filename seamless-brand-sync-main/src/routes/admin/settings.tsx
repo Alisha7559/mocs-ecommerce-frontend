@@ -11,6 +11,7 @@ import { CategoryBannersConfig } from "@/components/admin/CategoryBannersConfig"
 import { CollectionsConfig } from "@/components/admin/CollectionsConfig";
 import { CollageConfig } from "@/components/admin/CollageConfig";
 import { AuthConfig } from "@/components/admin/AuthConfig";
+import { AdvertisementsConfig } from "@/components/admin/AdvertisementsConfig";
 
 export const Route = createFileRoute("/admin/settings")({
   head: () => ({
@@ -159,6 +160,9 @@ function AdminSettingsPage() {
   const [originalPromiseCollage, setOriginalPromiseCollage] = useState<any[]>([]);
   const [selectedPromiseIdx, setSelectedPromiseIdx] = useState(0);
 
+  const [advertisements, setAdvertisements] = useState<string[]>([]);
+  const [originalAdvertisements, setOriginalAdvertisements] = useState<string[]>([]);
+
   const [selectedBannerIdx, setSelectedBannerIdx] = useState(0);
   const [selectedCollectionIdx, setSelectedCollectionIdx] = useState(0);
 
@@ -194,7 +198,7 @@ function AdminSettingsPage() {
       { threshold: 0.2, rootMargin: "-80px 0px -50% 0px" }
     );
 
-    const sections = ["hero-slideshow", "promo-banner", "collections-banners", "promise-collage", "auth-page"];
+    const sections = ["hero-slideshow", "promo-banner", "collections-banners", "promise-collage", "auth-page", "advertisements"];
     sections.forEach((id) => {
       const el = document.getElementById(id);
       if (el) observer.observe(el);
@@ -208,7 +212,8 @@ function AdminSettingsPage() {
     JSON.stringify(categoriesBanners) !== JSON.stringify(originalCategoriesBanners) ||
     JSON.stringify(collectionsBanners) !== JSON.stringify(originalCollectionsBanners) ||
     JSON.stringify(promiseCollage) !== JSON.stringify(originalPromiseCollage) ||
-    JSON.stringify(authSettings) !== JSON.stringify(originalAuthSettings);
+    JSON.stringify(authSettings) !== JSON.stringify(originalAuthSettings) ||
+    JSON.stringify(advertisements) !== JSON.stringify(originalAdvertisements);
 
   const blocker = useBlocker({
     shouldBlockFn: () => isDirty,
@@ -237,6 +242,7 @@ function AdminSettingsPage() {
 
         const promiseRes = await apiClient.settings.get("promise_collage").catch(() => null);
         const authRes = await apiClient.settings.get("auth_settings").catch(() => null);
+        const adsRes = await apiClient.settings.get("advertisements").catch(() => null);
 
         if (heroRes && Array.isArray(heroRes.value)) {
           setHeroSlides(heroRes.value);
@@ -320,6 +326,14 @@ function AdminSettingsPage() {
           setAuthSettings(val);
           setOriginalAuthSettings(JSON.parse(JSON.stringify(val)));
         }
+
+        if (adsRes && adsRes.value && Array.isArray(adsRes.value)) {
+          setAdvertisements(adsRes.value);
+          setOriginalAdvertisements(JSON.parse(JSON.stringify(adsRes.value)));
+        } else {
+          setAdvertisements([]);
+          setOriginalAdvertisements([]);
+        }
       } catch (err: any) {
         toast.error("Failed to load settings from server");
       } finally {
@@ -337,11 +351,13 @@ function AdminSettingsPage() {
       await apiClient.settings.update("collections_banners", collectionsBanners);
       await apiClient.settings.update("promise_collage", promiseCollage);
       await apiClient.settings.update("auth_settings", authSettings);
+      await apiClient.settings.update("advertisements", advertisements);
       setOriginalSlides(JSON.parse(JSON.stringify(heroSlides)));
       setOriginalCategoriesBanners(JSON.parse(JSON.stringify(categoriesBanners)));
       setOriginalCollectionsBanners(JSON.parse(JSON.stringify(collectionsBanners)));
       setOriginalPromiseCollage(JSON.parse(JSON.stringify(promiseCollage)));
       setOriginalAuthSettings(JSON.parse(JSON.stringify(authSettings)));
+      setOriginalAdvertisements(JSON.parse(JSON.stringify(advertisements)));
       toast.success("Settings updated successfully!");
       return true;
     } catch (err: any) {
@@ -412,6 +428,23 @@ function AdminSettingsPage() {
 
   const handlePromiseFileChange = (e: React.ChangeEvent<HTMLInputElement>, idx: number) => {
     handleFileUpload(e, "Uploading image...", `promise-upload-${idx}`, (url) => updatePromiseField(idx, "bg", url));
+  };
+
+  const addAdsImageByUrl = (url: string) => {
+    setAdvertisements((prev) => [...prev, url]);
+  };
+
+  const removeAdsImage = (idx: number) => {
+    setAdvertisements((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleAdsFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleFileUpload(
+      e,
+      "Uploading advertisement image...",
+      `ad-upload-${Date.now()}`,
+      (url) => setAdvertisements((prev) => [...prev, url])
+    );
   };
 
   const handleBannerFileChange = (e: React.ChangeEvent<HTMLInputElement>, idx: number) => {
@@ -565,6 +598,17 @@ function AdminSettingsPage() {
         >
           Auth Page Config
         </button>
+        <button
+          onClick={() => scrollToSection("advertisements")}
+          className={cn(
+            "flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold uppercase transition-all cursor-pointer whitespace-nowrap",
+            activeSection === "advertisements"
+              ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20 scale-105"
+              : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+          )}
+        >
+          Advertisements
+        </button>
       </div>      <div className="space-y-6">
         <HeroSlidesConfig
           heroSlides={heroSlides}
@@ -614,6 +658,14 @@ function AdminSettingsPage() {
           getImageUrl={getImageUrl}
         />
 
+        <AdvertisementsConfig
+          advertisements={advertisements}
+          addAdsImageByUrl={addAdsImageByUrl}
+          removeAdsImage={removeAdsImage}
+          handleAdsFileChange={handleAdsFileChange}
+          getImageUrl={getImageUrl}
+        />
+
         <div className="flex justify-end pt-4">
           <button
             onClick={handleSaveSettings}
@@ -649,6 +701,7 @@ function AdminSettingsPage() {
                   setCollectionsBanners(originalCollectionsBanners);
                   setPromiseCollage(originalPromiseCollage);
                   setAuthSettings(originalAuthSettings);
+                  setAdvertisements(originalAdvertisements);
                   blocker.proceed();
                 }}
                 className="rounded-full border border-destructive/30 bg-destructive/10 text-destructive px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition hover:bg-destructive/20 cursor-pointer"

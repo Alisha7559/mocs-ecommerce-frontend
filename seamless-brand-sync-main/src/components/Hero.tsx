@@ -102,7 +102,7 @@ export function Hero() {
   const current = heroSlides[active];
 
   return (
-    <section className="relative h-[65vh] sm:h-[70vh] lg:h-[80vh] min-h-[450px] w-full overflow-hidden bg-stone-950 text-white border-b border-stone-900">
+    <section className="relative h-[55vh] sm:h-[65vh] lg:h-[80vh] min-h-[400px] w-full overflow-hidden bg-stone-950 text-white border-b border-stone-900">
       
       {/* 1. Image Container: full absolute background, centered on footwear */}
       <div className="absolute inset-0 z-0 overflow-hidden">
@@ -111,7 +111,6 @@ export function Hero() {
             key={active}
             src={current.bg}
             alt={current.title}
-
             initial={{ opacity: 0, scale: 1.15 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
@@ -132,83 +131,83 @@ export function Hero() {
         </AnimatePresence>
         
         {/* Subtle dark shade overlay: bottom gradient on mobile, left gradient on desktop for text legibility */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent lg:bg-gradient-to-r lg:from-black/70 lg:via-black/20 lg:to-transparent z-10 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent lg:bg-gradient-to-r lg:from-black/45 lg:via-transparent lg:to-transparent z-10 pointer-events-none" />
       </div>
 
-      {/* 2. Content Container: overlays the image on all screens, positioned downwards on mobile */}
-      <div className="absolute inset-0 z-20 px-6 sm:px-12 md:pl-20 lg:pl-32 xl:pl-56 flex flex-col justify-end pb-12 sm:pb-16 lg:justify-center lg:pb-0 bg-transparent">
+      {/* 2. Content Container: overlays the image on all screens, positioned downwards at bottom-left on mobile */}
+      <div className="absolute inset-x-0 bottom-0 z-20 px-6 pb-6 pt-20 sm:px-12 md:pl-20 lg:inset-0 lg:pl-32 xl:pl-56 flex flex-col justify-end lg:justify-center lg:pb-0 bg-gradient-to-t from-black/40 via-transparent to-transparent lg:bg-transparent">
         <div className="max-w-xl text-left">
           <AnimatePresence mode="wait" custom={direction}>
             <div key={active}>
-              {/* 1. Eyebrow: Times New Roman eyebrow */}
+              {/* 1. Eyebrow */}
               <motion.p
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                className="text-2xl sm:text-2xl md:text-2xl lg:text-3xl font-extrabold uppercase text-primary tracking-[0.25em]"
+                className="text-sm sm:text-base lg:text-3xl font-extrabold uppercase text-primary tracking-[0.25em]"
                 style={{ 
                   fontFamily: "'Times New Roman', Times, serif",
-                  textShadow: "0 1px 3px rgba(0, 0, 0, 0.25)"
+                  textShadow: "0 1px 3px rgba(0, 0, 0, 0.45)"
                 }}
               >
                 {current.eyebrow}
               </motion.p>
 
-              {/* 2. Title: Times New Roman Font with elegant slide-up mask */}
-              <div className="overflow-hidden py-1">
+              {/* 2. Title */}
+              <div className="overflow-hidden py-0.5">
                 <motion.h1
                   initial={{ y: "100%", opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   exit={{ y: "-100%", opacity: 0 }}
                   transition={{ duration: 0.85, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-                  className="mt-1.5 font-black leading-[1.1] text-white text-4xl sm:text-5xl md:text-5xl lg:text-6xl xl:text-6xl tracking-wide uppercase"
+                  className="mt-0.5 font-black leading-[1.1] text-white text-2xl sm:text-3xl lg:text-6xl tracking-wide uppercase"
                   style={{ 
                     fontFamily: "'Times New Roman', Times, serif",
-                    textShadow: "0 2px 5px rgba(0, 0, 0, 0.35)"
+                    textShadow: "0 2px 5px rgba(0, 0, 0, 0.55)"
                   }}
                 >
                   {renderTitle(current.title)}
                 </motion.h1>
               </div>
 
-              {/* Elegant decorative horizontal accent line */}
+              {/* Accent Line */}
               <motion.div
                 initial={{ scaleX: 0, opacity: 0 }}
                 animate={{ scaleX: 1, opacity: 1 }}
                 exit={{ scaleX: 0, opacity: 0 }}
                 transition={{ duration: 0.65, delay: 0.3, ease: "easeOut" }}
-                className="w-12 sm:w-16 h-[2px] bg-primary my-2.5 sm:my-3 origin-left"
+                className="w-8 sm:w-16 h-[2px] bg-primary my-1.5 sm:my-3 origin-left"
               />
 
-              {/* 3. Subtitle: Fade and slide up in Times New Roman */}
+              {/* 3. Subtitle */}
               <motion.p
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.7, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                className="hidden lg:block max-w-xl text-sm sm:text-base md:text-lg leading-relaxed text-stone-200 italic tracking-wide"
+                className="hidden sm:block max-w-xl text-xs sm:text-sm lg:text-base leading-relaxed text-stone-200 italic tracking-wide"
                 style={{ 
                   fontFamily: "'Times New Roman', Times, serif",
-                  textShadow: "0 1px 3px rgba(0, 0, 0, 0.25)"
+                  textShadow: "0 1px 3px rgba(0, 0, 0, 0.45)"
                 }}
               >
                 {current.subtitle}
               </motion.p>
 
-              {/* 4. CTA Button (Desktop only) */}
+              {/* 4. CTA Button */}
               <motion.div
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -15 }}
                 transition={{ duration: 0.7, delay: 0.45, ease: [0.16, 1, 0.3, 1] }}
-                className="hidden lg:block pt-3"
+                className="pt-2 sm:pt-4"
               >
                 <Link
                   to={current.to as any}
-                  className="group inline-flex items-center gap-2 rounded-full bg-primary px-8 py-3.5 text-xs font-bold uppercase tracking-wide text-white transition-all hover:-translate-y-0.5 hover:brightness-110 shadow-md hover:shadow-orange-500/20"
+                  className="group inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 sm:px-7 sm:py-3 text-[10px] sm:text-xs font-bold uppercase tracking-wide text-white transition-all hover:brightness-110 shadow-md"
                 >
-                  {current.cta || "Shop Now"} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  {current.cta || "Shop Now"} <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 transition-transform group-hover:translate-x-1" />
                 </Link>
               </motion.div>
             </div>
@@ -221,17 +220,17 @@ export function Hero() {
         type="button"
         aria-label="Previous slide"
         onClick={() => go((active - 1 + heroSlides.length) % heroSlides.length)}
-        className="absolute left-5 top-1/2 z-30 -translate-y-1/2 grid grid-cols-1 place-items-center rounded-full bg-[#1C1917]/70 border border-stone-800 p-3.5 text-stone-300 shadow-sm transition hover:bg-primary hover:text-white cursor-pointer animate-fade-in"
+        className="absolute left-4 top-1/2 z-30 -translate-y-1/2 grid grid-cols-1 place-items-center rounded-full bg-[#1C1917]/60 border border-stone-800 p-2 sm:p-3.5 text-stone-300 shadow-sm transition hover:bg-primary hover:text-white cursor-pointer"
       >
-        <ChevronLeft className="h-5 w-5" />
+        <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
       </button>
       <button
         type="button"
         aria-label="Next slide"
         onClick={() => go((active + 1) % heroSlides.length)}
-        className="absolute right-5 top-1/2 z-30 -translate-y-1/2 grid grid-cols-1 place-items-center rounded-full bg-[#1C1917]/70 border border-stone-800 p-3.5 text-stone-300 shadow-sm transition hover:bg-primary hover:text-white cursor-pointer animate-fade-in"
+        className="absolute right-4 top-1/2 z-30 -translate-y-1/2 grid grid-cols-1 place-items-center rounded-full bg-[#1C1917]/60 border border-stone-800 p-2 sm:p-3.5 text-stone-300 shadow-sm transition hover:bg-primary hover:text-white cursor-pointer"
       >
-        <ChevronRight className="h-5 w-5" />
+        <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
       </button>
     </section>
   );

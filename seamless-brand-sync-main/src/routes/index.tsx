@@ -157,6 +157,7 @@ function Home() {
   ]);
 
   const [promiseCollage, setPromiseCollage] = useState<any[]>([]);
+  const [advertisements, setAdvertisements] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchBannersSettings = async () => {
@@ -189,35 +190,21 @@ function Home() {
         console.warn("Failed to load  collage settings", err);
       }
     };
+    const fetchAdsSettings = async () => {
+      try {
+        const res = await apiClient.settings.get("advertisements");
+        if (res && res.value && Array.isArray(res.value) && res.value.length > 0) {
+          setAdvertisements(res.value);
+        }
+      } catch (err) {
+        console.warn("Failed to load advertisements settings", err);
+      }
+    };
     fetchBannersSettings();
     fetchCollectionsSettings();
     fetchPromiseSettings();
+    fetchAdsSettings();
   }, []);
-
-  const [emblaRef, emblaApi] = useEmblaCarousel({
-    align: "start",
-    loop: false,
-    containScroll: "trimSnaps",
-  });
-
-  const scrollPrev = () => emblaApi && emblaApi.scrollPrev();
-  const scrollNext = () => emblaApi && emblaApi.scrollNext();
-
-  const [prevBtnDisabled, setPrevBtnDisabled] = useState(true);
-  const [nextBtnDisabled, setNextBtnDisabled] = useState(true);
-
-  const onSelect = () => {
-    if (!emblaApi) return;
-    setPrevBtnDisabled(!emblaApi.canScrollPrev());
-    setNextBtnDisabled(!emblaApi.canScrollNext());
-  };
-
-  useEffect(() => {
-    if (!emblaApi) return;
-    onSelect();
-    emblaApi.on("select", onSelect);
-    emblaApi.on("reInit", onSelect);
-  }, [emblaApi]);
 
   useEffect(() => {
     setAllProducts(products);
@@ -252,7 +239,136 @@ function Home() {
     });
   }, [allProducts]);
 
-  const [newArrivalIdx, setNewArrivalIdx] = useState(0);
+  const sandalsProducts = useMemo(() => {
+    const firstFourTrending = processedProducts.slice(0, 4).map((p: any) => p.id || p._id || p.artNumber);
+    const firstFourNewArrivals = newArrivals.slice(0, 4).map((p: any) => p.id || p._id || p.artNumber);
+    const firstFourTrendingList = trendingProducts.slice(0, 4).map((p: any) => p.id || p._id || p.artNumber);
+
+    const forbiddenIds = new Set([...firstFourTrending, ...firstFourNewArrivals, ...firstFourTrendingList]);
+
+    // 1. Get all sandals
+    const allSandals = allProducts.filter((p: any) => {
+      const cat = (p.category || "").toLowerCase();
+      const name = (p.name || "").toLowerCase();
+      const isSandal = cat.includes("sandal") || name.includes("sandal") || cat.includes("chappal") || cat.includes("slide");
+      return isSandal;
+    });
+
+    // 2. Separate into "different" (not in forbidden list) and "same" (in forbidden list)
+    const differentSandals = allSandals.filter((p: any) => {
+      const pid = p.id || p._id || p.artNumber;
+      return !forbiddenIds.has(pid);
+    });
+
+    // Ensure we have at least 4 unique items for the beginning of the section
+    if (differentSandals.length < 4) {
+      const differentOthers = allProducts.filter((p: any) => {
+        const pid = p.id || p._id || p.artNumber;
+        const cat = (p.category || "").toLowerCase();
+        const name = (p.name || "").toLowerCase();
+        const isSandal = cat.includes("sandal") || name.includes("sandal") || cat.includes("chappal") || cat.includes("slide");
+        return !isSandal && !forbiddenIds.has(pid);
+      });
+      differentSandals.push(...differentOthers);
+    }
+
+    const firstFour = differentSandals.slice(0, 4);
+    const firstFourIds = new Set(firstFour.map((p: any) => p.id || p._id || p.artNumber));
+
+    // 3. Other sandals
+    const remainingSandals = allSandals.filter((p: any) => {
+      const pid = p.id || p._id || p.artNumber;
+      return !firstFourIds.has(pid);
+    });
+
+    // 4. All other products from the shop
+    const remainingOthers = allProducts.filter((p: any) => {
+      const pid = p.id || p._id || p.artNumber;
+      if (firstFourIds.has(pid)) return false;
+      const cat = (p.category || "").toLowerCase();
+      const name = (p.name || "").toLowerCase();
+      const isSandal = cat.includes("sandal") || name.includes("sandal") || cat.includes("chappal") || cat.includes("slide");
+      return !isSandal;
+    });
+
+    const combined = [...firstFour, ...remainingSandals, ...remainingOthers];
+
+    const seen = new Set();
+    return combined.filter((p: any) => {
+      const key = p.id || p._id;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [allProducts, processedProducts, newArrivals, trendingProducts]);
+
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    align: "start",
+    loop: false,
+    containScroll: "trimSnaps",
+  });
+
+  const scrollPrev = () => emblaApi && emblaApi.scrollPrev();
+  const scrollNext = () => emblaApi && emblaApi.scrollNext();
+
+  const [prevBtnDisabled, setPrevBtnDisabled] = useState(true);
+  const [nextBtnDisabled, setNextBtnDisabled] = useState(true);
+
+  const onSelect = () => {
+    if (!emblaApi) return;
+    setPrevBtnDisabled(!emblaApi.canScrollPrev());
+    setNextBtnDisabled(!emblaApi.canScrollNext());
+  };
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    onSelect();
+    emblaApi.on("select", onSelect);
+    emblaApi.on("reInit", onSelect);
+  }, [emblaApi]);
+
+  const [emblaRefSandals, emblaApiSandals] = useEmblaCarousel({
+    align: "start",
+    loop: false,
+    containScroll: "trimSnaps",
+  });
+
+  const scrollPrevSandals = () => emblaApiSandals && emblaApiSandals.scrollPrev();
+  const scrollNextSandals = () => emblaApiSandals && emblaApiSandals.scrollNext();
+
+  const [prevBtnDisabledSandals, setPrevBtnDisabledSandals] = useState(true);
+  const [nextBtnDisabledSandals, setNextBtnDisabledSandals] = useState(true);
+
+  const onSelectSandals = () => {
+    if (!emblaApiSandals) return;
+    setPrevBtnDisabledSandals(!emblaApiSandals.canScrollPrev());
+    setNextBtnDisabledSandals(!emblaApiSandals.canScrollNext());
+  };
+
+  useEffect(() => {
+    if (!emblaApiSandals) return;
+    onSelectSandals();
+    emblaApiSandals.on("select", onSelectSandals);
+    emblaApiSandals.on("reInit", onSelectSandals);
+  }, [emblaApiSandals, sandalsProducts]);
+
+  const [emblaRefNewArrivals] = useEmblaCarousel({
+    align: "start",
+    loop: false,
+    containScroll: "trimSnaps",
+    dragFree: true,
+  });
+
+  const [activeAd, setActiveAd] = useState(0);
+
+  useEffect(() => {
+    if (advertisements.length <= 1) return;
+    const interval = setInterval(() => {
+      setActiveAd((prev) => (prev + 1) % advertisements.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [advertisements.length]);
+
   const [windowWidth, setWindowWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1024);
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
@@ -260,7 +376,6 @@ function Home() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const cardsPerViewBanner = windowWidth >= 1024 ? 3 : windowWidth >= 768 ? 2 : 1;
   const isMobileMarquee = windowWidth < 768;
   const marqueeX = isMobileMarquee ? -1096 : -1376;
   const marqueeDuration = isMobileMarquee ? 12 : 25;
@@ -274,7 +389,7 @@ function Home() {
       {/* Dynamic New Arrivals Ad Banner Section */}
       {newArrivals.length > 0 && (
         <section className="mx-auto max-w-7xl px-4 pt-4 pb-12 sm:px-6 lg:px-8">
-          <Reveal className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-[#ef4444] via-[#f97316] to-[#fdba74] p-6 sm:p-8 lg:p-10 flex flex-col md:flex-row items-center justify-between gap-8 shadow-xl">
+          <Reveal className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-[#ef4444] via-[#f97316] to-[#fdba74] p-6 sm:p-8 lg:p-10 flex flex-col md:flex-row items-center justify-start gap-4 md:gap-5 lg:gap-6 shadow-xl">
 
 
             {/* Left Column: Heading */}
@@ -289,68 +404,35 @@ function Home() {
 
             {/* Right Column: Sliding Cards Container */}
             <div className="relative z-10 flex-1 w-full py-4">
-              {/* Conditional Navigation Controls (Only shown if more products are there) */}
-              {newArrivals.length > cardsPerViewBanner && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => setNewArrivalIdx((prev) => Math.max(0, prev - 1))}
-                    disabled={newArrivalIdx === 0}
-                    className="absolute -left-5 top-1/2 -translate-y-1/2 z-30 hidden lg:flex h-11 w-11 items-center justify-center rounded-full border border-stone-200 bg-white text-stone-850 hover:bg-stone-50 transition shadow-md disabled:opacity-30 disabled:pointer-events-none cursor-pointer hover:scale-105"
-                  >
-                    <ChevronLeft className="h-5 w-5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setNewArrivalIdx((prev) => Math.min(newArrivals.length - cardsPerViewBanner, prev + 1))}
-                    disabled={newArrivalIdx >= newArrivals.length - cardsPerViewBanner}
-                    className="absolute -right-5 top-1/2 -translate-y-1/2 z-30 hidden lg:flex h-11 w-11 items-center justify-center rounded-full border border-stone-200 bg-white text-stone-850 hover:bg-stone-50 transition shadow-md disabled:opacity-30 disabled:pointer-events-none cursor-pointer hover:scale-105"
-                  >
-                    <ChevronRight className="h-5 w-5" />
-                  </button>
-                </>
-              )}
 
-              {/* Slider Viewport (prevents clipping the navigation arrows) */}
-              <div className="overflow-x-auto lg:overflow-hidden w-full px-1 no-scrollbar scroll-smooth snap-x snap-mandatory">
+              {/* Slider Viewport using Embla */}
+              <div className="overflow-hidden w-full px-1 cursor-grab active:cursor-grabbing" ref={emblaRefNewArrivals}>
                 {/* Slider Wrapper */}
-                <div 
-                  className="flex gap-6 transition-transform duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]"
-                  style={windowWidth >= 1024 ? {
-                    transform: `translateX(calc(-${newArrivalIdx} * (100% / ${cardsPerViewBanner}) - ${newArrivalIdx * 24 / cardsPerViewBanner}px))`
-                  } : undefined}
-                >
+                <div className="flex gap-6">
                   {newArrivals.map((product) => (
                     <Link
                       key={product.id}
                       to="/product/$id"
                       params={{ id: product.id }}
-                      className={cn(
-                        "shrink-0 bg-black/10 hover:bg-black/20 rounded-3xl p-4 flex flex-col justify-between hover:scale-[1.03] transition-all duration-300 relative group h-[320px] sm:h-[350px] lg:h-[280px] snap-center",
-                        cardsPerViewBanner === 3
-                          ? "w-[calc(33.33%-16px)]"
-                          : cardsPerViewBanner === 2
-                            ? "w-[calc(70%-12px)] sm:w-[calc(50%-12px)]"
-                            : "w-[85%] sm:w-[calc(50%-12px)]"
-                      )}
+                      className="shrink-0 bg-black/10 hover:bg-black/20 rounded-xl p-3 flex flex-col justify-between hover:scale-[1.03] transition-all duration-300 relative group h-[220px] sm:h-[240px] lg:h-[200px] snap-center min-w-0 flex-[0_0_46%] sm:flex-[0_0_28%] lg:flex-[0_0_23.5%]"
                     >
                       {/* Shoe Image */}
-                      <div className="h-52 sm:h-60 lg:h-44 w-full overflow-hidden rounded-2xl relative z-10 bg-transparent flex items-center justify-center">
+                      <div className="h-32 sm:h-36 lg:h-28 w-full overflow-hidden rounded-lg relative z-10 bg-transparent flex items-center justify-center">
                         <img
                           src={product.image}
                           alt={product.name}
                           loading="lazy"
-                          className="w-full h-full object-contain scale-[1.25] mix-blend-multiply transition-transform duration-500 ease-out group-hover:scale-[1.32]"
+                          className="w-full h-full object-contain scale-[1.12] mix-blend-multiply transition-transform duration-500 ease-out group-hover:scale-[1.18]"
                         />
                       </div>
 
                       {/* Product Name and Price Details */}
                       <div className="text-center z-10 w-full mt-2">
-                        <h4 className="font-sans text-sm sm:text-base font-bold text-white truncate px-1">
+                        <h4 className="font-sans text-[11px] sm:text-xs font-bold text-white truncate px-1">
                           {product.name}
                         </h4>
                         <div className="mt-1">
-                          <span className="text-xs sm:text-sm font-black text-white/95 bg-black/35 px-3.5 py-1 rounded-full inline-block">
+                          <span className="text-[10px] sm:text-xs font-black text-white/95 bg-black/35 px-3 py-0.5 rounded-full inline-block">
                             ₹{product.price}
                           </span>
                         </div>
@@ -539,6 +621,139 @@ function Home() {
       <div className="my-2">
         <ScrollBrandReveal collections={collectionsBanners} />
       </div>
+
+      {/* Dynamic Advertisements Section */}
+      {advertisements.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 overflow-hidden">
+          <div className="relative w-full flex items-center justify-center h-[200px] sm:h-[300px] lg:h-[400px] select-none">
+            {advertisements.length === 1 ? (
+              // Single image: static center card
+              <div className="w-[85%] sm:w-[80%] lg:w-[75%] h-full rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden bg-stone-950 shadow-soft">
+                <img
+                  src={getImageUrl(advertisements[0])}
+                  alt="Advertisement Banner"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ) : (
+              // Multiple images: Centered slide with left and right previews (as drawn in the sketch)
+              <div className="relative w-full h-full flex items-center justify-center overflow-visible">
+                {(() => {
+                  const len = advertisements.length;
+                  const prevIdx = (activeAd - 1 + len) % len;
+                  const nextIdx = (activeAd + 1) % len;
+
+                  const slides = [
+                    { idx: prevIdx, position: "left" },
+                    { idx: activeAd, position: "center" },
+                    { idx: nextIdx, position: "right" }
+                  ];
+
+                  return slides.map((slide, i) => {
+                    const isCenter = slide.position === "center";
+                    const isLeft = slide.position === "left";
+                    const isRight = slide.position === "right";
+
+                    // Prevent double rendering if length is 2
+                    if (len === 2 && isLeft && isRight) return null;
+
+                    return (
+                      <motion.div
+                        key={`${slide.idx}-${slide.position}`}
+                        onClick={() => {
+                          if (isLeft) setActiveAd(prevIdx);
+                          if (isRight) setActiveAd(nextIdx);
+                        }}
+                        initial={false}
+                        animate={{
+                          x: isCenter
+                            ? "0%"
+                            : isLeft
+                            ? "-44%"
+                            : "44%",
+                          scale: isCenter ? 1.05 : 0.72,
+                          opacity: isCenter ? 1 : 0.38,
+                          filter: isCenter ? "blur(0px)" : "blur(1.5px)",
+                          zIndex: isCenter ? 10 : 1,
+                        }}
+                        transition={{
+                          duration: 0.85,
+                          ease: [0.16, 1, 0.3, 1]
+                        }}
+                        className={cn(
+                          "absolute h-full rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden bg-stone-950 cursor-pointer w-[76%] sm:w-[72%] lg:w-[68%] border-0 outline-none",
+                          isCenter ? "pointer-events-auto shadow-[0_20px_50px_rgba(0,0,0,0.35)]" : "pointer-events-auto shadow-none hover:opacity-60"
+                        )}
+                      >
+                        <img
+                          src={getImageUrl(advertisements[slide.idx])}
+                          alt={`Advertisement Banner #${slide.idx + 1}`}
+                          className="w-full h-full object-cover pointer-events-none"
+                        />
+                      </motion.div>
+                    );
+                  });
+                })()}
+              </div>
+            )}
+          </div>
+
+          {/* Dot Indicators */}
+          {advertisements.length > 1 && (
+            <div className="mt-6 flex justify-center gap-2">
+              {advertisements.map((_, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setActiveAd(idx)}
+                  className={cn(
+                    "h-1.5 rounded-full transition-all duration-300 cursor-pointer border-0 p-0",
+                    activeAd === idx ? "w-6 bg-primary" : "w-1.5 bg-stone-400"
+                  )}
+                  aria-label={`Go to ad slide ${idx + 1}`}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Sandals Product Showcase (under advertisements, horizontal scroll slider, no heading) */}
+      {sandalsProducts.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+          <div className="relative">
+            {/* Circular float controls visible dynamically on both sides of the cards */}
+            <button
+              type="button"
+              disabled={prevBtnDisabledSandals}
+              onClick={scrollPrevSandals}
+              aria-label="Previous products"
+              className="absolute left-1 xl:-left-5 top-1/2 -translate-y-1/2 z-20 hidden lg:flex h-11 w-11 items-center justify-center rounded-full border border-border/80 bg-background/95 hover:bg-background text-foreground hover:border-primary hover:text-primary transition-all duration-300 shadow-card cursor-pointer shrink-0 hover:scale-105 disabled:opacity-0 disabled:pointer-events-none"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              disabled={nextBtnDisabledSandals}
+              onClick={scrollNextSandals}
+              aria-label="Next products"
+              className="absolute right-1 xl:-right-5 top-1/2 -translate-y-1/2 z-20 hidden lg:flex h-11 w-11 items-center justify-center rounded-full border border-border/80 bg-background/95 hover:bg-background text-foreground hover:border-primary hover:text-primary transition-all duration-300 shadow-card cursor-pointer shrink-0 hover:scale-105 disabled:opacity-0 disabled:pointer-events-none"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+
+            <div className="overflow-hidden cursor-grab active:cursor-grabbing px-2 py-4" ref={emblaRefSandals}>
+              <div className="flex gap-6">
+                {sandalsProducts.map((p, i) => (
+                  <div key={p.id} className="min-w-0 flex-[0_0_46%] sm:flex-[0_0_46%] lg:flex-[0_0_23.5%]">
+                    <ProductCard product={p} index={i} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
 
 

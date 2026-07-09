@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "motion/react";
 import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -13,6 +13,7 @@ interface CategoryCardProps {
 
 export function CategoryCard({ name, defaultImg, products, linkSearch }: CategoryCardProps) {
   const [imgIndex, setImgIndex] = useState(0);
+  const navigate = useNavigate();
 
   const images = useMemo(() => {
     const latest = products.slice(0, 3);
@@ -28,13 +29,19 @@ export function CategoryCard({ name, defaultImg, products, linkSearch }: Categor
     return () => clearInterval(interval);
   }, [images]);
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    navigate({ to: "/shop", search: linkSearch });
+  };
+
   return (
     <Link
       to="/shop"
       search={linkSearch}
+      onClick={handleClick}
       className="group relative block h-72 overflow-hidden rounded-3xl bg-muted shadow-soft transition-all duration-500 hover:-translate-y-1.5 hover:shadow-lift"
     >
-      <div className="absolute inset-0 h-full w-full">
+      <div className="absolute inset-0 h-full w-full pointer-events-none">
         <AnimatePresence mode="wait">
           <motion.img
             key={images[imgIndex]}
@@ -52,8 +59,8 @@ export function CategoryCard({ name, defaultImg, products, linkSearch }: Categor
           />
         </AnimatePresence>
       </div>
-      <div className="absolute inset-0 bg-gradient-to-t from-secondary/85 via-secondary/20 to-transparent" />
-      <div className="absolute inset-x-0 bottom-0 p-5 text-secondary-foreground text-left">
+      <div className="absolute inset-0 bg-gradient-to-t from-secondary/85 via-secondary/20 to-transparent pointer-events-none" />
+      <div className="absolute inset-x-0 bottom-0 p-5 text-secondary-foreground text-left pointer-events-none">
         <p className="text-xs font-medium uppercase tracking-wide text-secondary-foreground/80">
           {products.length} {products.length === 1 ? "style" : "styles"}
         </p>

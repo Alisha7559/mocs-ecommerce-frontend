@@ -55,19 +55,16 @@ export function AuthSlideshow({ authSlides }: AuthSlideshowProps) {
           <img
             src={getImageUrl(authSlides[activeSlide]?.image)}
             alt="Auth visual"
-            className="absolute inset-0 h-full w-full object-cover filter brightness-[0.7] saturate-[0.85]"
+            className="absolute inset-0 h-full w-full object-cover"
           />
 
-          {/* Glowing Dark Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/35 to-black/60 pointer-events-none" />
-
           {/* Title & Description overlay on Desktop/Tablet viewports */}
-          <div className="absolute bottom-8 left-8 right-8 z-10 hidden md:block">
+          <div className="absolute bottom-6 left-6 right-6 z-10 hidden md:block bg-stone-950/80 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-lg">
             <motion.h2
               initial={{ y: 15, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.15, duration: 0.4 }}
-              className="font-display text-2xl font-black text-white leading-tight"
+              className="font-display text-xl font-black text-white leading-tight"
             >
               {authSlides[activeSlide]?.title}
             </motion.h2>
@@ -75,13 +72,13 @@ export function AuthSlideshow({ authSlides }: AuthSlideshowProps) {
               initial={{ y: 15, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.25, duration: 0.4 }}
-              className="mt-2 text-xs leading-relaxed text-zinc-300 max-w-[90%]"
+              className="mt-1.5 text-xs leading-relaxed text-zinc-300"
             >
               {authSlides[activeSlide]?.subtitle}
             </motion.p>
 
             {/* Slideshow dot indicators */}
-            <div className="mt-5 flex gap-1.5">
+            <div className="mt-4 flex gap-1.5">
               {authSlides.map((_, idx) => (
                 <span
                   key={idx}

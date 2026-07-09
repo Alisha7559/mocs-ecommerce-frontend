@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Reveal } from "@/components/Reveal";
 import { cn, getImageUrl } from "@/lib/utils";
 
 export function ScrollBrandReveal({ collections }: { collections: any[] }) {
   const [showAll, setShowAll] = useState(false);
   const visibleCollections = showAll ? collections : collections.slice(0, 5);
+  const navigate = useNavigate();
 
   const renderCard = (item: any, idx: number, isFlex: boolean) => {
     const targetTo = item.to || "/shop";
@@ -29,6 +30,11 @@ export function ScrollBrandReveal({ collections }: { collections: any[] }) {
     };
     const bgUrl = getOptimizedUrl(bgImg);
 
+    const handleClick = (e: React.MouseEvent) => {
+      e.preventDefault();
+      navigate({ to: targetTo as any, search: searchVal as any });
+    };
+
     return (
       <Reveal
         key={item.key || item.title}
@@ -38,6 +44,7 @@ export function ScrollBrandReveal({ collections }: { collections: any[] }) {
         <Link
           to={targetTo}
           search={searchVal as any}
+          onClick={handleClick}
           className="group block relative h-40 w-full rounded-3xl overflow-hidden shadow-soft transition-all duration-500 hover:scale-105 hover:-translate-y-2 hover:shadow-xl border border-black/5 bg-stone-900"
         >
           {/* Background Image */}
@@ -46,14 +53,14 @@ export function ScrollBrandReveal({ collections }: { collections: any[] }) {
               src={bgUrl}
               alt={item.title}
               loading="lazy"
-              className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105 pointer-events-none"
             />
           ) : null}
           {/* Dark Overlay */}
-          <div className="absolute inset-0 bg-black/45 transition-colors duration-500 group-hover:bg-black/55" />
+          <div className="absolute inset-0 bg-black/45 transition-colors duration-500 group-hover:bg-black/55 pointer-events-none" />
 
           {/* Centered Content */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-4 z-10">
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-4 z-10 pointer-events-none">
             <h3 className="font-display text-xs sm:text-sm font-black text-white tracking-widest uppercase drop-shadow-md text-center px-1 leading-snug">
               {item.title}
             </h3>
