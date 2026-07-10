@@ -17,7 +17,7 @@ export function AuthConfig({
   return (
     <div id="auth-page" className="space-y-6 pt-6 border-t border-border scroll-mt-24 font-sans text-left">
       <div className="flex items-center justify-between">
-        <h2 className="font-display text-lg font-bold">Auth Page Configuration</h2>
+        <h2 className="font-display text-lg font-bold">Login Images</h2>
       </div>
 
       <div className="grid gap-6 md:grid-cols-12 items-stretch pt-2">

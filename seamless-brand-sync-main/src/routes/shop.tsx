@@ -10,6 +10,7 @@ import {
 import { ProductCard, ProductCardSkeleton } from "@/components/ProductCard";
 import { cn, getImageUrl } from "@/lib/utils";
 import { apiClient, API_BASE_URL } from "@/lib/api";
+import { useStore } from "@/lib/store";
 
 // Styled custom dropdown that animates open/close instead of using native <select>.
 function FancyDropdown<T extends string>({
@@ -179,7 +180,13 @@ function Shop() {
     return Array.from(list);
   }, [allProducts]);
 
-  const availableCollections = ["All", "Sandals", "Sports", "Casual", "Formal", "Trending", "New Arrival"];
+  const { collections } = useStore();
+
+  const availableCollections = useMemo(() => {
+    const list = new Set<string>(["All", "Sandals", "Sports", "Casual", "Formal", "Trending", "New Arrival"]);
+    collections.forEach((c: any) => list.add(c.name));
+    return Array.from(list);
+  }, [collections]);
 
   const availableColors = useMemo(() => {
     const map = new Map<string, string>();

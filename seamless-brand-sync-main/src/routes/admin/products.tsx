@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { apiClient, API_BASE_URL, getToken } from "@/lib/api";
 import { AdminDropdown } from "@/components/admin/AdminShell";
 import { cn, getImageUrl } from "@/lib/utils";
+import { useStore } from "@/lib/store";
 
 export const Route = createFileRoute("/admin/products")({
   head: () => ({
@@ -93,6 +94,7 @@ function getHexFromColorName(name: string): string | null {
 
 function AdminProducts() {
   const router = useRouter();
+  const { collections, fetchCollections } = useStore();
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -131,10 +133,9 @@ function AdminProducts() {
   const [isNewProduct, setIsNewProduct] = useState(false);
   const [isTrending, setIsTrending] = useState(false);
   
-  // Category creation helper state
-  const [newCatOpen, setNewCatOpen] = useState(false);
-  const [newCatName, setNewCatName] = useState("");
-  const [newCatDesc, setNewCatDesc] = useState("");
+  // Collection creation & management helper state
+  const [manageCollOpen, setManageCollOpen] = useState(false);
+  const [newCollName, setNewCollName] = useState("");
   
   const [submitting, setSubmitting] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -147,6 +148,9 @@ function AdminProducts() {
       // Load categories first if not loaded
       const cats = await apiClient.categories.list().catch(() => []);
       setCategories(cats);
+
+      // Load collections
+      await fetchCollections().catch(() => {});
 
       // Load products
       const queryStr = `search=${encodeURIComponent(search)}&category=${catFilter}&collection=${collFilter}&showDeleted=${showDeleted}&showInactive=${showInactive}&page=${page}&limit=10&sort=-createdAt`;
@@ -197,7 +201,7 @@ function AdminProducts() {
     setEditingProduct(null);
     setArtNumber("");
     setName("");
-    setCollection("Casual");
+    setCollection(collections[0]?.name || "Casual");
     setPrice("");
     setOldPrice("");
     setCategoryId(categories[0]?._id || "");
@@ -386,19 +390,38 @@ function AdminProducts() {
     toast.info(`Adding variant shade to Article: ${product.artNumber}`);
   };
 
-  const handleCreateCategory = async (e: React.FormEvent) => {
+  const handleCreateCollection = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newCatName) return;
+    const nameTrimmed = newCollName.trim();
+    if (!nameTrimmed) return;
+    const nameLower = nameTrimmed.toLowerCase();
+    if (nameLower === "men" || nameLower === "women" || nameLower === "kids") {
+      toast.error("Category names (Men, Women, Kids) cannot be collections");
+      return;
+    }
     try {
-      const cat = await apiClient.categories.create({ name: newCatName, description: newCatDesc });
-      setCategories(prev => [...prev, cat].sort((a, b) => a.name.localeCompare(b.name)));
-      setCategoryId(cat._id);
-      setNewCatOpen(false);
-      setNewCatName("");
-      setNewCatDesc("");
-      toast.success("Category created!");
+      const coll = await apiClient.collections.create({ name: nameTrimmed });
+      await fetchCollections();
+      setCollection(coll.name);
+      setNewCollName("");
+      toast.success("Collection created!");
     } catch (err: any) {
-      toast.error(err?.message || "Failed to create category");
+      toast.error(err?.message || "Failed to create collection");
+    }
+  };
+
+  const handleDeleteCollection = async (id: string, name: string) => {
+    if (!window.confirm(`Are you sure you want to delete the collection "${name}"?`)) return;
+    try {
+      await apiClient.collections.delete(id);
+      await fetchCollections();
+      // Reset collection state if the currently selected one was deleted
+      if (collection === name) {
+        setCollection("");
+      }
+      toast.success("Collection deleted successfully!");
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to delete collection");
     }
   };
 
@@ -607,7 +630,7 @@ function AdminProducts() {
               }}
               options={[
                 { value: "", label: "All Collections" },
-                ...["Sandals", "Heels", "Sports", "Casual", "Formal", "Sneakers", "Boots", "Trending", "New Arrival"].map((c) => ({ value: c, label: c }))
+                ...collections.map((c) => ({ value: c.name, label: c.name }))
               ]}
             />
 
@@ -883,16 +906,7 @@ function AdminProducts() {
                   </div>
                   
                   <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">Category</label>
-                      <button
-                        type="button"
-                        onClick={() => setNewCatOpen(true)}
-                        className="text-xs font-bold text-primary hover:text-primary-glow"
-                      >
-                        + Create New
-                      </button>
-                    </div>
+                    <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Category</label>
                     <AdminDropdown
                       value={categoryId}
                       onChange={setCategoryId}
@@ -903,12 +917,22 @@ function AdminProducts() {
                   </div>
 
                   <div>
-                    <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Collection</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">Collection</label>
+                      <button
+                        type="button"
+                        onClick={() => setManageCollOpen(true)}
+                        className="text-xs font-bold text-primary hover:text-primary-glow"
+                      >
+                        + Create New
+                      </button>
+                    </div>
                     <AdminDropdown
                       value={collection}
                       onChange={setCollection}
                       className="w-full"
-                      options={["Sandals", "Heels", "Sports", "Casual", "Formal", "Sneakers", "Boots", "Trending", "New Arrival"].map((c) => ({ value: c, label: c }))}
+                      placeholder="Select collection"
+                      options={collections.map((c) => ({ value: c.name, label: c.name }))}
                     />
                   </div>
 
@@ -1318,30 +1342,58 @@ function AdminProducts() {
         </div>
       )}
 
-      {/* Category Creation Overlay Modal */}
-      {newCatOpen && (
+      {/* Collection Management Overlay Modal */}
+      {manageCollOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-secondary/80 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-3xl border border-border bg-card p-6 shadow-card animate-in fade-in zoom-in-95 duration-200">
+          <div className="w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-card animate-in fade-in zoom-in-95 duration-200">
             <div className="mb-4 flex items-center justify-between">
-              <h4 className="font-display text-lg font-bold">New Category</h4>
-              <button onClick={() => setNewCatOpen(false)} className="rounded-full p-1.5 hover:bg-accent">
+              <h4 className="font-display text-lg font-bold">Manage Collections</h4>
+              <button onClick={() => setManageCollOpen(false)} className="rounded-full p-1.5 hover:bg-accent">
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <form onSubmit={handleCreateCategory} className="space-y-4">
-              <div>
-                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Category Name</label>
-                <input required value={newCatName} onChange={(e) => setNewCatName(e.target.value)} className="input-field" placeholder="e.g. Performance Running" />
+
+            {/* List of existing collections */}
+            <div className="mb-6">
+              <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Existing Collections</label>
+              <div className="max-h-60 overflow-y-auto rounded-2xl border border-border bg-muted/10 p-2 space-y-1">
+                {collections.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-4">No collections found.</p>
+                ) : (
+                  collections.map((c) => (
+                    <div key={c._id} className="flex items-center justify-between rounded-xl px-3 py-2 hover:bg-accent/40 group transition">
+                      <span className="text-sm font-semibold">{c.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteCollection(c._id, c.name)}
+                        className="p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition"
+                        title="Delete collection"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))
+                )}
               </div>
+            </div>
+
+            {/* Form to add a new collection */}
+            <form onSubmit={handleCreateCollection} className="space-y-4 pt-4 border-t border-border/60">
               <div>
-                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Description (Optional)</label>
-                <input value={newCatDesc} onChange={(e) => setNewCatDesc(e.target.value)} className="input-field" placeholder="Sneakers for..." />
+                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">New Collection Name</label>
+                <input
+                  required
+                  value={newCollName}
+                  onChange={(e) => setNewCollName(e.target.value)}
+                  className="input-field"
+                  placeholder="e.g. Summer Special"
+                />
               </div>
               <button
                 type="submit"
                 className="w-full rounded-full bg-primary py-3 text-sm font-bold uppercase tracking-wider text-primary-foreground transition hover:bg-primary-glow"
               >
-                Create Category
+                Create Collection
               </button>
             </form>
           </div>

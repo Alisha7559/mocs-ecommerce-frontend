@@ -22,12 +22,11 @@ const navLinks: NavLink[] = [
 ];
 
 export function Navbar() {
-  const { cartCount, wishlist, setCartOpen, setSearchOpen, role, user, logout } = useStore();
+  const { cartCount, wishlist, setCartOpen, setSearchOpen, role, user, logout, collections } = useStore();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
-  const [collectionsList, setCollectionsList] = useState<string[]>(["Sandals", "Heels", "Sports", "Casual", "Formal", "Trending", "New Arrival"]);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -54,20 +53,6 @@ export function Navbar() {
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
-
-  useEffect(() => {
-    const fetchCollections = async () => {
-      try {
-        const res = await (apiClient as any).collections.list();
-        if (res && res.length > 0) {
-          setCollectionsList(res.map((c: any) => c.name));
-        }
-      } catch (err) {
-        console.warn("Failed to load collections from API", err);
-      }
-    };
-    fetchCollections();
-  }, []);
 
   return (
     <>
@@ -141,15 +126,15 @@ export function Navbar() {
                       Browse Collections
                     </p>
                     <ul className="space-y-1">
-                      {collectionsList.map((col) => (
-                        <li key={col}>
+                      {collections.map((col) => (
+                        <li key={col._id}>
                           <Link
                             to="/shop"
-                            search={{ collection: col } as any}
+                            search={{ collection: col.name } as any}
                             onClick={() => setMenuOpen(false)}
                             className="text-sm font-semibold text-muted-foreground transition hover:text-primary block py-1"
                           >
-                            {col}
+                            {col.name}
                           </Link>
                         </li>
                       ))}
@@ -334,15 +319,15 @@ export function Navbar() {
               <div className="mt-6 border-t border-border pt-4">
                 <p className="px-3 text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Collections</p>
                 <div className="grid grid-cols-2 gap-1.5 px-1">
-                  {collectionsList.map((col) => (
+                  {collections.map((col) => (
                     <Link
-                      key={col}
+                      key={col._id}
                       to="/shop"
-                      search={{ collection: col } as any}
+                      search={{ collection: col.name } as any}
                       onClick={() => setMobileOpen(false)}
                       className="rounded-xl border border-transparent px-3 py-2 text-sm font-semibold text-muted-foreground transition-all hover:border-primary hover:bg-primary/5 hover:text-primary"
                     >
-                      {col}
+                      {col.name}
                     </Link>
                   ))}
                 </div>

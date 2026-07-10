@@ -54,6 +54,8 @@ type StoreContextType = {
   login: (token: string, user: any) => void;
   logout: () => void;
   clearCart: () => void;
+  collections: any[];
+  fetchCollections: () => Promise<void>;
 };
 
 const StoreContext = createContext<StoreContextType | null>(null);
@@ -77,6 +79,26 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [role, setRoleState] = useState<Role>("user");
   const [user, setUser] = useState<any>(null);
+  const [collections, setCollections] = useState<any[]>([]);
+
+  const fetchCollections = async () => {
+    try {
+      const res = await apiClient.collections.list();
+      if (res) {
+        const filtered = res.filter((c: any) => {
+          const nameLower = c.name.toLowerCase();
+          return nameLower !== "men" && nameLower !== "women" && nameLower !== "kids";
+        });
+        setCollections(filtered);
+      }
+    } catch (err) {
+      console.warn("Failed to load collections from API", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchCollections();
+  }, []);
 
 
 
@@ -240,8 +262,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       login,
       logout,
       clearCart,
+      collections,
+      fetchCollections,
     }),
-    [cart, wishlist, cartOpen, searchOpen, recentlyViewed, orders, role, user],
+    [cart, wishlist, cartOpen, searchOpen, recentlyViewed, orders, role, user, collections],
   );
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

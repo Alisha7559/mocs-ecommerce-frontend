@@ -79,8 +79,7 @@ export function AdvertisementsConfig({
           {advertisements.map((imgUrl, idx) => (
             <div
               key={idx}
-              className="relative group rounded-3xl overflow-hidden border border-border bg-stone-900 shadow-soft aspect-[16/9] flex items-center justify-center text-center"
-            >
+className="relative group rounded-3xl overflow-hidden border border-border bg-stone-900 shadow-soft h-[60vh] flex items-center justify-center text-center" >
               {imgUrl ? (
                 <>
                   <img
