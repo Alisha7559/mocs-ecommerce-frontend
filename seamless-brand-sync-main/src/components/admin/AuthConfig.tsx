@@ -29,12 +29,20 @@ export function AuthConfig({
             <div className="space-y-3">
               {authSettings.slides?.map((slide: any, idx: number) => (
                 <div key={idx} className="relative group overflow-hidden rounded-2xl bg-zinc-900 border border-border h-[100px] flex flex-col justify-end p-3">
-                  {slide.image ? (
+                  {slide.image && slide.image.trim() !== "" ? (
                     <div className="absolute inset-0 h-full w-full">
                       <img
                         src={getImageUrl(slide.image)}
                         alt={`Slide ${idx + 1} Preview`}
                         className="h-full w-full object-cover brightness-[0.7] saturate-[0.8]"
+                        onError={(e) => {
+                          const fallbackImages = [
+                            "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=800",
+                            "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?q=80&w=800",
+                            "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?q=80&w=800"
+                          ];
+                          e.currentTarget.src = fallbackImages[idx % fallbackImages.length];
+                        }}
                       />
                       <div className="absolute inset-0 bg-black/40" />
                     </div>

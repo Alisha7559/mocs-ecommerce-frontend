@@ -1,4 +1,4 @@
-import { Plus, Trash2, Image } from "lucide-react";
+import { Plus, Trash2, Image, Eye, X } from "lucide-react";
 import { useState } from "react";
 
 interface AdvertisementsConfigProps {
@@ -17,6 +17,7 @@ export function AdvertisementsConfig({
   getImageUrl,
 }: AdvertisementsConfigProps) {
   const [urlInput, setUrlInput] = useState("");
+  const [viewImage, setViewImage] = useState<string | null>(null);
 
   const handleAddUrl = () => {
     if (!urlInput.trim()) return;
@@ -79,7 +80,8 @@ export function AdvertisementsConfig({
           {advertisements.map((imgUrl, idx) => (
             <div
               key={idx}
-className="relative group rounded-3xl overflow-hidden border border-border bg-stone-900 shadow-soft h-[60vh] flex items-center justify-center text-center" >
+              className="relative group rounded-3xl overflow-hidden border border-border bg-stone-900 shadow-soft h-[220px] flex items-center justify-center text-center"
+            >
               {imgUrl ? (
                 <>
                   <img
@@ -87,11 +89,19 @@ className="relative group rounded-3xl overflow-hidden border border-border bg-st
                     alt={`Advertisement #${idx + 1}`}
                     className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                   />
-                  <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity duration-350 z-10 flex items-center justify-center">
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-350 z-10 flex items-center justify-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setViewImage(imgUrl)}
+                      className="rounded-full bg-white/20 backdrop-blur-md border border-white/20 p-3 text-white transition hover:bg-white/40 cursor-pointer shadow-lg hover:scale-110"
+                      title="View Full Image"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
                     <button
                       type="button"
                       onClick={() => removeAdsImage(idx)}
-                      className="rounded-full bg-destructive p-3 text-white transition hover:bg-destructive/80 cursor-pointer shadow-lg hover:scale-110"
+                      className="rounded-full bg-destructive p-3 text-white transition hover:bg-destructive/85 cursor-pointer shadow-lg hover:scale-110"
                       title="Delete Advertisement"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -109,6 +119,25 @@ className="relative group rounded-3xl overflow-hidden border border-border bg-st
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Full Image View Modal */}
+      {viewImage && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 p-4 animate-in fade-in duration-200">
+          <div className="relative max-w-4xl max-h-[85vh] overflow-hidden rounded-3xl bg-transparent border border-white/10 shadow-2xl flex items-center justify-center">
+            <img
+              src={getImageUrl(viewImage)}
+              alt="Full Size View"
+              className="max-w-full max-h-[85vh] object-contain rounded-3xl select-none"
+            />
+            <button
+              onClick={() => setViewImage(null)}
+              className="absolute top-4 right-4 rounded-full bg-black/60 backdrop-blur-md p-2.5 text-white hover:bg-black/80 transition-all hover:scale-105 border border-white/10 shadow-lg cursor-pointer"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
       )}
     </div>

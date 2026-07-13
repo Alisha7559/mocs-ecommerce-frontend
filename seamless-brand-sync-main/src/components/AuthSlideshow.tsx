@@ -52,11 +52,25 @@ export function AuthSlideshow({ authSlides }: AuthSlideshowProps) {
           className="absolute inset-0 h-full w-full"
         >
           {/* Cover Background Image */}
-          <img
-            src={getImageUrl(authSlides[activeSlide]?.image)}
-            alt="Auth visual"
-            className="absolute inset-0 h-full w-full object-cover"
-          />
+          {(() => {
+            const fallbackImages = [
+              "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=800",
+              "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?q=80&w=800",
+              "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?q=80&w=800"
+            ];
+            const slideImg = authSlides[activeSlide]?.image;
+            const imgSrc = slideImg && slideImg.trim() !== "" ? getImageUrl(slideImg) : fallbackImages[activeSlide % fallbackImages.length];
+            return (
+              <img
+                src={imgSrc}
+                alt="Auth visual"
+                className="absolute inset-0 h-full w-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.src = fallbackImages[activeSlide % fallbackImages.length];
+                }}
+              />
+            );
+          })()}
 
           {/* Title & Description overlay on Desktop/Tablet viewports */}
           <div className="absolute bottom-6 left-6 right-6 z-10 hidden md:block bg-stone-950/80 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-lg">

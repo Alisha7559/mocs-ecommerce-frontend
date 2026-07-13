@@ -596,7 +596,7 @@ function AdminSettingsPage() {
               : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
           )}
         >
-          Auth Page Config
+          Login images
         </button>
         <button
           onClick={() => scrollToSection("advertisements")}

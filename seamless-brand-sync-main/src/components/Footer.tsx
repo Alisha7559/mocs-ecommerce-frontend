@@ -29,7 +29,6 @@ const footerNav = [
       { label: "About", to: "/about" },
       { label: "Why Choose MOCS", to: "/about" },
       { label: "Contact", to: "/contact" },
-      { label: "Careers", to: "/contact" },
       { label: "Press", to: "/contact" },
     ]
   }
