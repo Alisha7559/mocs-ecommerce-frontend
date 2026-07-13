@@ -40,7 +40,7 @@ export function AuthSlideshow({ authSlides }: AuthSlideshowProps) {
   if (!authSlides || authSlides.length === 0) return null;
 
   return (
-    <div className="relative w-full md:w-[45%] h-[150px] md:h-auto overflow-hidden border-b md:border-b-0 md:border-r border-stone-150 select-none bg-stone-950">
+    <div className="relative w-full md:w-[45%] h-[150px] md:h-auto overflow-hidden border-b md:border-b-0 md:border-r border-stone-150 select-none bg-stone-950 rounded-t-[22px] md:rounded-tr-none md:rounded-l-[22px]">
       <AnimatePresence initial={false}>
         <motion.div
           key={activeSlide}
@@ -64,7 +64,7 @@ export function AuthSlideshow({ authSlides }: AuthSlideshowProps) {
               <img
                 src={imgSrc}
                 alt="Auth visual"
-                className="absolute inset-0 h-full w-full object-cover"
+                className="absolute inset-0 h-full w-full object-cover object-bottom rounded-t-[22px] md:rounded-tr-none md:rounded-l-[22px]"
                 onError={(e) => {
                   e.currentTarget.src = fallbackImages[activeSlide % fallbackImages.length];
                 }}
