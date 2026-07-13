@@ -609,7 +609,7 @@ function AdminSettingsPage() {
         >
           Advertisements
         </button>
-      </div>      <div className="space-y-6">
+      </div>      <div className="space-y-14">
         <HeroSlidesConfig
           heroSlides={heroSlides}
           updateHeroSlideField={updateHeroSlideField}
