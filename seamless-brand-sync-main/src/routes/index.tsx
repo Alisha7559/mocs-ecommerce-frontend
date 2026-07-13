@@ -301,7 +301,7 @@ function Home() {
       <NewArrivals products={newArrivals} />
       <CategoriesSection categoriesBanners={categoriesBanners} />
       <ProductsCarousel products={processedProducts} />
-      <div className="my-2">
+      <div className="my-16 md:my-20">
         <ScrollBrandReveal collections={collectionsBanners} />
       </div>
       <AdCarousel advertisements={advertisements} />

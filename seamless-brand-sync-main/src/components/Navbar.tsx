@@ -33,6 +33,13 @@ export function Navbar() {
   const isHome = pathname === "/";
   const transparent = isHome && !scrolled;
 
+  const handleLogoClick = (e: React.MouseEvent) => {
+    if (isHome) {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
       if (userOpen && userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
@@ -76,7 +83,7 @@ export function Navbar() {
             </button>
           </div>
 
-          <Link to="/" aria-label="MOCS home" className="flex items-center">
+          <Link to="/" onClick={handleLogoClick} aria-label="MOCS home" className="flex items-center">
             <img
               src={logo}
               alt="MOCS"
@@ -296,7 +303,16 @@ export function Navbar() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="mb-8 flex items-center justify-between">
-                <img src={logo} alt="MOCS" className="h-8 w-auto" />
+                <Link
+                  to="/"
+                  onClick={(e) => {
+                    handleLogoClick(e);
+                    setMobileOpen(false);
+                  }}
+                  className="flex items-center"
+                >
+                  <img src={logo} alt="MOCS" className="h-8 w-auto" />
+                </Link>
                 <button type="button" aria-label="Close" onClick={() => setMobileOpen(false)}>
                   <X className="h-6 w-6" />
                 </button>
