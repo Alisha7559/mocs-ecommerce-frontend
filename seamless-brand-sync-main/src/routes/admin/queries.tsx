@@ -4,6 +4,7 @@ import { Inbox, Search, Eye, X, CheckCircle, HelpCircle, AlertCircle, Trash2, Ro
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api";
 import { AdminDropdown } from "@/components/admin/AdminShell";
+import { formatDateTime } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/queries")({
   head: () => ({
@@ -204,7 +205,7 @@ function AdminQueries() {
                       <p className="text-xs text-muted-foreground truncate max-w-[240px]">{q.message}</p>
                     </td>
                     <td className="p-4 text-xs font-semibold text-muted-foreground">
-                      {new Date(q.createdAt).toLocaleString()}
+                      {formatDateTime(q.createdAt)}
                     </td>
                     <td className="p-4">
                       <span className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${

@@ -4,6 +4,7 @@ import { User, Phone, MapPin, Key, Save, ShieldCheck, Mail, Calendar, Briefcase 
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api";
 import { useStore } from "@/lib/store";
+import { formatDate } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/profile")({
   head: () => ({
@@ -149,7 +150,7 @@ function AdminProfilePage() {
               </div>
               <div className="flex items-center gap-3">
                 <Calendar className="h-4 w-4 text-primary shrink-0" />
-                <span>Registered: {new Date(profile.createdAt).toLocaleDateString()}</span>
+                <span>Registered: {formatDate(profile.createdAt)}</span>
               </div>
             </div>
           </div>

@@ -4,16 +4,48 @@ import { useEffect, useState } from "react";
 import { FileText, Search, Eye, Edit3, X, Truck, Check, CornerUpLeft, Clock, RotateCcw, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api";
-import { getImageUrl } from "@/lib/utils";
+import { getImageUrl, formatDateTime } from "@/lib/utils";
 import { AdminDropdown } from "@/components/admin/AdminShell";
 
 const isItemRefundedOrReturned = (item: any, order: any) => {
   if (!order) return false;
-  const hasReturnStatus = order.orderStatus === "Returned" || order.status === "returned" || order.paymentStatus === "Refunded" || order.paymentStatus === "refunded";
+  const hasReturnStatus = 
+    order.orderStatus === "Returned" || 
+    order.status === "returned" || 
+    order.orderStatus === "Return Requested" || 
+    order.status === "return_requested" || 
+    order.paymentStatus === "Refunded" || 
+    order.paymentStatus === "refunded";
   if (!hasReturnStatus && !order.returnReason) return false;
   if (order.items?.length === 1) return true;
   const reason = (order.returnReason || "").toLowerCase();
   return reason.includes(item.name.toLowerCase());
+};
+
+const getOrderStatusStyle = (status: string) => {
+  const s = status || "Placed";
+  switch (s) {
+    case "Delivered":
+    case "delivered":
+      return "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20";
+    case "Cancelled":
+    case "cancelled":
+      return "bg-red-500/10 text-red-600 border border-red-500/20";
+    case "Return Requested":
+    case "return_requested":
+      return "bg-purple-500/10 text-purple-600 border border-purple-500/20";
+    case "Returned":
+    case "returned":
+      return "bg-stone-500/10 text-stone-600 border border-stone-500/20";
+    case "Shipped":
+    case "shipped":
+      return "bg-indigo-500/10 text-indigo-650 border border-indigo-650/20";
+    case "Out for Delivery":
+    case "out_for_delivery":
+      return "bg-pink-500/10 text-pink-650 border border-pink-650/20";
+    default:
+      return "bg-amber-500/10 text-amber-600 border border-amber-500/20";
+  }
 };
 
 const formatDate = (dateStr: string) => {
@@ -108,10 +140,10 @@ function AdminOrders() {
     setDetailModalOpen(true);
   };
 
-  const handleUpdateStatus = async (orderId: string, newStatus: string) => {
+  const handleUpdateStatus = async (orderId: string, newStatus: string, note?: string) => {
     setUpdatingStatus(true);
     try {
-      const updated = await apiClient.orders.updateStatus(orderId, newStatus);
+      const updated = await apiClient.orders.updateStatus(orderId, newStatus, note);
       toast.success(`Order status updated to: ${newStatus}`);
       setSelectedOrder(updated);
       fetchOrders();
@@ -202,6 +234,8 @@ function AdminOrders() {
                 { value: "Out for Delivery", label: "Out for Delivery" },
                 { value: "Delivered", label: "Delivered" },
                 { value: "Cancelled", label: "Cancelled" },
+                { value: "Return Requested", label: "Return Requested" },
+                { value: "Return Accepted", label: "Return Accepted" },
                 { value: "Returned", label: "Returned" },
               ]}
             />
@@ -277,20 +311,34 @@ function AdminOrders() {
                       <p className="font-semibold text-foreground">{o.shippingAddress?.name || o.user?.name || "Guest User"}</p>
                       <p className="text-xs text-muted-foreground">{o.shippingAddress?.phone || "—"}</p>
                     </td>
-                    <td className="p-4">
+                     <td className="p-4">
                       <span className={`inline-block rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
-                        o.orderStatus === "Delivered" || o.status === "delivered" ? "bg-emerald-500/10 text-emerald-500" : o.orderStatus === "Cancelled" || o.status === "cancelled" ? "bg-destructive/10 text-destructive" : "bg-amber-500/10 text-amber-500"
+                        getOrderStatusStyle(o.orderStatus || o.status)
                       }`}>
                         {o.orderStatus || o.status}
                       </span>
                     </td>
                     <td className="p-4">
                       <div className="flex flex-col gap-0.5">
-                        <span className={`inline-block w-fit rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
-                          o.paymentStatus === "Paid" || o.paymentStatus === "paid" ? "bg-emerald-500/10 text-emerald-500" : o.paymentStatus === "Failed" || o.paymentStatus === "failed" || o.paymentStatus === "Cancelled" || o.paymentStatus === "cancelled" ? "bg-destructive/10 text-destructive" : "bg-amber-500/10 text-amber-500"
-                        }`}>
-                          {o.paymentStatus?.toLowerCase() === "cancelled" ? "Failed" : o.paymentStatus}
-                        </span>
+                        {(() => {
+                          const payStat = o.paymentStatus?.toLowerCase() || "";
+                          const method = o.paymentMethod?.toLowerCase() || "";
+                          const displayStatus = (method === "online" && payStat === "pending") || payStat === "cancelled" ? "Failed" : o.paymentStatus;
+                          const isPaid = displayStatus === "Paid" || displayStatus === "paid";
+                          const isFailed = displayStatus === "Failed" || displayStatus === "failed" || displayStatus === "Cancelled" || displayStatus === "cancelled";
+                          const isRefunded = displayStatus === "Refunded" || displayStatus === "refunded";
+                          
+                          let badgeClass = "bg-amber-500/10 text-amber-500 border border-amber-500/20";
+                          if (isPaid) badgeClass = "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20";
+                          if (isFailed) badgeClass = "bg-destructive/10 text-destructive border border-destructive/20";
+                          if (isRefunded) badgeClass = "bg-purple-500/10 text-purple-600 border border-purple-500/20";
+
+                          return (
+                            <span className={`inline-block w-fit rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${badgeClass}`}>
+                              {displayStatus}
+                            </span>
+                          );
+                        })()}
                         <span className="text-[9px] font-bold text-muted-foreground uppercase">{o.paymentMethod}</span>
                       </div>
                     </td>
@@ -363,7 +411,7 @@ function AdminOrders() {
                       {selectedOrder.razorpayOrderId ? selectedOrder.razorpayOrderId.slice(-8).toUpperCase() : selectedOrder._id.slice(-8).toUpperCase()}
                     </span>
                   </h3>
-                  <p className="text-[11px] text-stone-500 font-medium">Placed on {new Date(selectedOrder.createdAt).toLocaleString()}</p>
+                  <p className="text-[11px] text-stone-500 font-medium">Placed on {formatDateTime(selectedOrder.createdAt)}</p>
                 </div>
                 <button
                   onClick={() => setDetailModalOpen(false)}
@@ -399,7 +447,7 @@ function AdminOrders() {
                               </span>
                               {isItemRefundedOrReturned(item, selectedOrder) && (
                                 <span className="text-[9px] font-extrabold uppercase tracking-widest text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200 shrink-0">
-                                  Refunded / Returned
+                                  {selectedOrder.orderStatus === "Return Requested" || selectedOrder.status === "return_requested" ? "Return Requested" : "Refunded / Returned"}
                                 </span>
                               )}
                             </div>
@@ -464,7 +512,7 @@ function AdminOrders() {
                       <div className="flex justify-between items-center">
                         <span className="text-stone-500 font-medium">Fulfillment Status:</span>
                         <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ${
-                          selectedOrder.orderStatus === "Delivered" ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20" : selectedOrder.orderStatus === "Cancelled" ? "bg-red-500/10 text-red-600 border border-red-500/20" : "bg-amber-500/10 text-amber-600 border border-amber-500/20"
+                          getOrderStatusStyle(selectedOrder.orderStatus || selectedOrder.status)
                         }`}>
                           {selectedOrder.orderStatus || selectedOrder.status}
                         </span>
@@ -472,11 +520,25 @@ function AdminOrders() {
 
                       <div className="flex justify-between items-center border-t border-stone-100 pt-2.5">
                         <span className="text-stone-500 font-medium">Payment Status:</span>
-                        <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ${
-                          selectedOrder.paymentStatus === "Paid" ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20" : selectedOrder.paymentStatus === "Failed" || selectedOrder.paymentStatus === "Cancelled" || selectedOrder.paymentStatus === "cancelled" ? "bg-red-500/10 text-red-600 border border-red-500/20" : "bg-amber-500/10 text-amber-600 border border-amber-500/20"
-                        }`}>
-                          {selectedOrder.paymentStatus?.toLowerCase() === "cancelled" ? "Failed" : selectedOrder.paymentStatus}
-                        </span>
+                        {(() => {
+                          const payStat = selectedOrder.paymentStatus?.toLowerCase() || "";
+                          const method = selectedOrder.paymentMethod?.toLowerCase() || "";
+                          const displayStatus = (method === "online" && payStat === "pending") || payStat === "cancelled" ? "Failed" : selectedOrder.paymentStatus;
+                          const isPaid = displayStatus === "Paid" || displayStatus === "paid";
+                          const isFailed = displayStatus === "Failed" || displayStatus === "failed" || displayStatus === "Cancelled" || displayStatus === "cancelled";
+                          const isRefunded = displayStatus === "Refunded" || displayStatus === "refunded";
+                          
+                          let badgeClass = "bg-amber-500/10 text-amber-600 border border-amber-500/20";
+                          if (isPaid) badgeClass = "bg-emerald-500/10 text-emerald-650 border border-emerald-500/20";
+                          if (isFailed) badgeClass = "bg-red-500/10 text-red-650 border border-red-500/20";
+                          if (isRefunded) badgeClass = "bg-purple-500/10 text-purple-650 border border-purple-500/20";
+
+                          return (
+                            <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ${badgeClass}`}>
+                              {displayStatus}
+                            </span>
+                          );
+                        })()}
                       </div>
 
                       <div className="flex justify-between items-center border-t border-stone-100 pt-2.5">
@@ -513,40 +575,80 @@ function AdminOrders() {
                       </button>
                     ) : (
                       <div className="space-y-4">
-                        <div className="grid gap-3 grid-cols-2">
-                          <div className="space-y-1">
-                            <label className="text-[9px] font-extrabold text-stone-400 uppercase tracking-widest block mb-1">Fulfillment</label>
-                            {(selectedOrder.paymentStatus?.toLowerCase() === "failed" || selectedOrder.paymentStatus?.toLowerCase() === "cancelled") ? (
-                              <div className="font-semibold text-stone-500 bg-stone-100/80 border border-stone-200/50 rounded-xl px-3 py-2 text-center text-xs">
-                                {selectedOrder.orderStatus || selectedOrder.status}
-                              </div>
-                            ) : (
-                              <AdminDropdown
-                                value={selectedOrder.orderStatus || selectedOrder.status}
-                                onChange={(val) => handleUpdateStatus(selectedOrder._id, val)}
-                                disabled={updatingStatus}
-                                className="w-full text-stone-700 font-bold"
-                                options={["Placed", "Confirmed", "Processing", "Shipped", "Out for Delivery", "Delivered", "Cancelled", "Returned"].map((s) => ({ value: s, label: s }))}
-                              />
-                            )}
+                        {selectedOrder.orderStatus === "Return Requested" ? (
+                          <div className="w-full">
+                            <button
+                              onClick={() => handleUpdateStatus(selectedOrder._id, "Return Accepted", "Return accepted. The item will be fetched back within 7 days.")}
+                              disabled={updatingStatus}
+                              className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 py-3 text-xs font-bold uppercase tracking-wider text-white transition cursor-pointer shadow-md shadow-purple-500/10"
+                            >
+                              Accept Return (Fetch in 7 days)
+                            </button>
                           </div>
-                          <div className="space-y-1">
-                            <label className="text-[9px] font-extrabold text-stone-400 uppercase tracking-widest block mb-1">Payment</label>
-                            {(selectedOrder.paymentStatus?.toLowerCase() === "failed" || selectedOrder.paymentStatus?.toLowerCase() === "cancelled") ? (
-                              <div className="font-bold text-destructive bg-destructive/10 border border-destructive/20 rounded-xl px-3 py-2 text-center text-xs uppercase">
-                                Failed
-                              </div>
-                            ) : (
-                              <AdminDropdown
-                                value={selectedOrder.paymentStatus}
-                                onChange={(val) => handleUpdatePaymentStatus(selectedOrder._id, val)}
-                                disabled={updatingStatus}
-                                className="w-full text-stone-700 font-bold"
-                                options={["Pending", "Paid", "Failed", "Refunded"].map((s) => ({ value: s, label: s }))}
-                              />
-                            )}
+                        ) : selectedOrder.orderStatus === "Return Accepted" ? (
+                          <div className="w-full">
+                            <button
+                              onClick={() => handleUpdateStatus(selectedOrder._id, "Returned", "Item fetched by company.")}
+                              disabled={updatingStatus}
+                              className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 py-3 text-xs font-bold uppercase tracking-wider text-white transition cursor-pointer shadow-md shadow-sky-500/10"
+                            >
+                              Mark as Returned (Item Fetched)
+                            </button>
                           </div>
-                        </div>
+                        ) : (
+                          <div className="grid gap-3 grid-cols-2">
+                            <div className="space-y-1">
+                              <label className="text-[9px] font-extrabold text-stone-400 uppercase tracking-widest block mb-1">Fulfillment</label>
+                              {(selectedOrder.paymentStatus?.toLowerCase() === "failed" || selectedOrder.paymentStatus?.toLowerCase() === "cancelled") ? (
+                                <div className="font-semibold text-stone-500 bg-stone-100/80 border border-stone-200/50 rounded-xl px-3 py-2 text-center text-xs">
+                                  {selectedOrder.orderStatus || selectedOrder.status}
+                                </div>
+                              ) : (
+                                <AdminDropdown
+                                  value={selectedOrder.orderStatus || selectedOrder.status}
+                                  onChange={(val) => handleUpdateStatus(selectedOrder._id, val)}
+                                  disabled={updatingStatus}
+                                  className="w-full text-stone-700 font-bold"
+                                  options={["Placed", "Confirmed", "Processing", "Shipped", "Out for Delivery", "Delivered", "Cancelled", "Return Accepted", "Returned"].map((s) => ({ value: s, label: s }))}
+                                />
+                              )}
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[9px] font-extrabold text-stone-400 uppercase tracking-widest block mb-1">Payment</label>
+                              {(() => {
+                                const isCod = selectedOrder.paymentMethod === "COD";
+                                const isReturned = selectedOrder.orderStatus === "Returned";
+                                const showDropdown = isCod || isReturned;
+
+                                if (!showDropdown) {
+                                  return (
+                                    <div className="font-semibold text-stone-500 bg-stone-100/80 border border-stone-200/50 rounded-xl px-3.5 py-2.5 text-center text-xs">
+                                      {selectedOrder.paymentStatus}
+                                    </div>
+                                  );
+                                }
+
+                                if (selectedOrder.paymentStatus?.toLowerCase() === "failed" || selectedOrder.paymentStatus?.toLowerCase() === "cancelled") {
+                                  return (
+                                    <div className="font-bold text-destructive bg-destructive/10 border border-destructive/20 rounded-xl px-3 py-2 text-center text-xs uppercase">
+                                      Failed
+                                    </div>
+                                  );
+                                }
+
+                                return (
+                                  <AdminDropdown
+                                    value={selectedOrder.paymentStatus}
+                                    onChange={(val) => handleUpdatePaymentStatus(selectedOrder._id, val)}
+                                    disabled={updatingStatus}
+                                    className="w-full text-stone-700 font-bold"
+                                    options={["Pending", "Paid", "Failed", "Refunded"].map((s) => ({ value: s, label: s }))}
+                                  />
+                                );
+                              })()}
+                            </div>
+                          </div>
+                        )}
 
                         {/* Status History Timeline */}
                         {selectedOrder.statusHistory && selectedOrder.statusHistory.length > 0 && (
@@ -559,7 +661,7 @@ function AdminOrders() {
                                   <p className="text-[11px] font-bold text-stone-850">{history.status}</p>
                                   {history.note && <p className="text-[10px] text-stone-500 mt-0.5">{history.note}</p>}
                                   <p className="text-[9px] text-stone-400 mt-0.5">
-                                    {new Date(history.updatedAt).toLocaleString()}
+                                    {formatDateTime(history.updatedAt)}
                                   </p>
                                 </div>
                               ))}

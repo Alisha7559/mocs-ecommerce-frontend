@@ -132,6 +132,9 @@ function AdminProducts() {
   const [isPublished, setIsPublished] = useState(true);
   const [isNewProduct, setIsNewProduct] = useState(false);
   const [isTrending, setIsTrending] = useState(false);
+  const [promo1, setPromo1] = useState("Easy shipping");
+  const [promo2, setPromo2] = useState("3-day returns");
+  const [promo3, setPromo3] = useState("3-months warranty");
   
   // Collection creation & management helper state
   const [manageCollOpen, setManageCollOpen] = useState(false);
@@ -211,6 +214,9 @@ function AdminProducts() {
     setIsPublished(true);
     setIsNewProduct(false);
     setIsTrending(false);
+    setPromo1("Easy shipping");
+    setPromo2("3-day returns");
+    setPromo3("3-months warranty");
     setShades([
       {
         id: `new-${Date.now()}`,
@@ -251,6 +257,9 @@ function AdminProducts() {
     setIsPublished(product.isPublished ?? true);
     setIsNewProduct(product.isNew ?? false);
     setIsTrending(product.isTrending ?? false);
+    setPromo1(product.promo1 || "Easy shipping");
+    setPromo2(product.promo2 || "3-day returns");
+    setPromo3(product.promo3 || "3-months warranty");
     
     try {
       const queryStr = `artNumber=${encodeURIComponent(product.artNumber)}&showDeleted=all&showInactive=all&limit=50`;
@@ -511,6 +520,9 @@ function AdminProducts() {
           isPublished: isPublished,
           isNew: shade.isNew || false,
           isTrending: shade.isTrending || false,
+          promo1,
+          promo2,
+          promo3,
         };
 
         if (shade.id && !shade.id.startsWith("new-")) {
@@ -960,6 +972,24 @@ function AdminProducts() {
                 <div>
                   <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Product Description</label>
                   <textarea required rows={3} value={description} onChange={(e) => setDescription(e.target.value)} className="input-field resize-none" placeholder="Provide detailed styling and build information..." />
+                </div>
+
+                <div className="border-t border-border pt-4 mt-2">
+                  <h5 className="text-[10px] font-extrabold uppercase tracking-widest text-primary mb-3">Product Promo Badges & Policies</h5>
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <div>
+                      <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Promo 1 (e.g. Shipping info)</label>
+                      <input required value={promo1} onChange={(e) => setPromo1(e.target.value)} className="input-field" placeholder="e.g. Easy shipping" />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Promo 2 (e.g. Return policy)</label>
+                      <input required value={promo2} onChange={(e) => setPromo2(e.target.value)} className="input-field" placeholder="e.g. 3-day returns" />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Promo 3 (e.g. Warranty details)</label>
+                      <input required value={promo3} onChange={(e) => setPromo3(e.target.value)} className="input-field" placeholder="e.g. 3-months warranty" />
+                    </div>
+                  </div>
                 </div>
               </div>
 

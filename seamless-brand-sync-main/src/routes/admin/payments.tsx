@@ -4,6 +4,7 @@ import { CreditCard, Search, DollarSign, CheckCircle2, AlertCircle, HelpCircle }
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api";
 import { AdminDropdown } from "@/components/admin/AdminShell";
+import { formatDateTime } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/payments")({
   head: () => ({
@@ -167,7 +168,7 @@ function AdminPayments() {
                       )}
                     </td>
                     <td className="p-4 text-xs font-semibold text-muted-foreground">
-                      {new Date(o.createdAt).toLocaleString()}
+                      {formatDateTime(o.createdAt)}
                     </td>
                     <td className="p-4">
                       <span className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${

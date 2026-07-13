@@ -72,7 +72,7 @@ export function AdminDropdown({ value, onChange, options, placeholder = "Select 
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -6, scale: 0.98 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
-            className="absolute right-0 left-0 z-50 mt-1.5 max-h-60 overflow-y-auto rounded-xl border border-stone-200 bg-white/95 backdrop-blur-md p-1 shadow-lg no-scrollbar min-w-[160px]"
+            className="absolute right-0 left-0 z-50 mt-1.5 max-h-60 overflow-y-auto rounded-xl border border-stone-200 bg-white/95 backdrop-blur-md p-1 shadow-lg min-w-[160px]"
           >
             {options.map((opt) => (
               <li key={opt.value}>

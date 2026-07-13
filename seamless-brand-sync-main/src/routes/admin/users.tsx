@@ -4,6 +4,7 @@ import { Users, Search, Edit3, Trash2, RotateCcw, X, AlertTriangle } from "lucid
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api";
 import { AdminDropdown } from "@/components/admin/AdminShell";
+import { formatDate } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/users")({
   head: () => ({
@@ -243,7 +244,7 @@ function AdminUsers() {
                       <p className="text-muted-foreground text-xs truncate max-w-[200px]">{u.address || "—"}</p>
                     </td>
                     <td className="p-4 text-xs font-semibold text-muted-foreground">
-                      {new Date(u.createdAt).toLocaleDateString()}
+                      {formatDate(u.createdAt)}
                     </td>
                     <td className="p-4 text-right">
                       <div className="flex gap-1.5 justify-end">

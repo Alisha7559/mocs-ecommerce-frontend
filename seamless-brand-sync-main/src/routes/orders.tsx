@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api";
 import { useStore } from "@/lib/store";
-import { getImageUrl, cn } from "@/lib/utils";
+import { getImageUrl, cn, formatDate } from "@/lib/utils";
 import { isAuthed } from "@/lib/auth";
 import { OrdersDropdown } from "@/components/OrdersDropdown";
 import { OrderDetailsModal } from "@/components/OrderDetailsModal";
@@ -27,6 +27,7 @@ const statusStyles: Record<string, string> = {
   delivered: "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20",
   cancelled: "bg-red-500/10 text-red-600 border border-red-500/20",
   return_requested: "bg-purple-500/10 text-purple-600 border border-purple-500/20",
+  return_accepted: "bg-sky-500/10 text-sky-600 border border-sky-500/20",
   returned: "bg-indigo-500/10 text-indigo-600 border border-indigo-500/20",
   
   Placed: "bg-amber-500/10 text-amber-600 border border-amber-500/20",
@@ -36,12 +37,22 @@ const statusStyles: Record<string, string> = {
   "Out for Delivery": "bg-purple-500/10 text-purple-600 border border-purple-500/20",
   Delivered: "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20",
   Cancelled: "bg-red-500/10 text-red-600 border border-red-500/20",
+  "Return Requested": "bg-purple-500/10 text-purple-600 border border-purple-500/20",
+  "Return Accepted": "bg-sky-500/10 text-sky-600 border border-sky-500/20",
   Returned: "bg-stone-500/10 text-stone-600 border border-stone-500/20",
 };
 
 const isItemRefundedOrReturned = (item: any, order: any) => {
   if (!order) return false;
-  const hasReturnStatus = order.orderStatus === "Returned" || order.status === "returned" || order.paymentStatus === "Refunded" || order.paymentStatus === "refunded";
+  const hasReturnStatus = 
+    order.orderStatus === "Returned" || 
+    order.status === "returned" || 
+    order.orderStatus === "Return Requested" || 
+    order.status === "return_requested" || 
+    order.orderStatus === "Return Accepted" || 
+    order.status === "return_accepted" || 
+    order.paymentStatus === "Refunded" || 
+    order.paymentStatus === "refunded";
   if (!hasReturnStatus && !order.returnReason) return false;
   if (order.items?.length === 1) return true;
   const reason = (order.returnReason || "").toLowerCase();
@@ -325,11 +336,7 @@ function OrdersPage() {
 
                           {/* Placed Date */}
                           <td className="whitespace-nowrap px-6 py-4.5 text-stone-600 text-xs font-semibold">
-                            {new Date(order.createdAt).toLocaleDateString(undefined, {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            })}
+                            {formatDate(order.createdAt)}
                           </td>
 
                           {/* Grand Total */}

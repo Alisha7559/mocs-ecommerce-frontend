@@ -123,9 +123,10 @@ function Checkout() {
     }
   };
 
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "upi" | "netbanking" | "cod">("netbanking");
+  const [paymentMethod, setPaymentMethod] = useState<"online" | "cod">("online");
   const [tempAddress, setTempAddress] = useState<any>(null);
   const [tempEmail, setTempEmail] = useState("");
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
   const shipping = cart.reduce((sum, item) => sum + ((item.product as any).shippingCharge || 0) * item.qty, 0);
   const total = cartTotal + shipping;
 
@@ -183,6 +184,9 @@ function Checkout() {
           setStateVal("");
         }
       }
+      
+      // Auto-enable editing if crucial information is missing
+      setIsEditingProfile(!user.phone || !user.address);
     }
   }, [user]);
 
@@ -237,7 +241,7 @@ function Checkout() {
   };
 
   const handleSelectPaymentOption = async (
-    method: "card" | "upi" | "netbanking" | "cod",
+    method: "online" | "cod",
     addr?: any,
     email?: string
   ) => {
@@ -378,114 +382,193 @@ function Checkout() {
       <div className="mt-8 grid gap-8 lg:grid-cols-[1.4fr_1fr]">
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="rounded-2xl border border-border bg-card p-6">
-            <h2 className="mb-4 font-display text-lg font-bold">Contact & shipping</h2>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <input
-                name="first"
-                required
-                placeholder="First name"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                className="input-field"
-              />
-              <input
-                name="last"
-                required
-                placeholder="Last name"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                className="input-field"
-              />
-              <input
-                name="email"
-                required
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="input-field sm:col-span-2"
-              />
-              <input
-                name="phone"
-                required
-                type="tel"
-                placeholder="Phone number"
-                value={phone}
-                maxLength={10}
-                onKeyPress={(e) => {
-                  if (!/[0-9]/.test(e.key)) {
-                    e.preventDefault();
-                  }
-                }}
-                onChange={(e) => {
-                  setPhone(e.target.value.replace(/[^0-9]/g, "").slice(0, 10));
-                }}
-                className="input-field sm:col-span-2"
-              />
-              <input
-                name="address"
-                required
-                placeholder="Address"
-                value={addressVal}
-                onChange={(e) => setAddressVal(e.target.value)}
-                className="input-field sm:col-span-2"
-              />
-              <input
-                name="city"
-                required
-                placeholder="City"
-                value={cityVal}
-                onChange={(e) => setCityVal(e.target.value)}
-                className="input-field"
-              />
-              <select
-                name="state"
-                required
-                value={stateVal}
-                onChange={(e) => setStateVal(e.target.value)}
-                className="input-field cursor-pointer bg-card text-foreground"
-              >
-                <option value="">Select State</option>
-                {indianStates.map((st) => (
-                  <option key={st} value={st}>
-                    {st}
-                  </option>
-                ))}
-              </select>
-              <input
-                name="postal"
-                required
-                placeholder="Postal code"
-                value={postalVal}
-                onKeyPress={(e) => {
-                  if (!/[0-9]/.test(e.key)) {
-                    e.preventDefault();
-                  }
-                }}
-                onChange={(e) => {
-                  setPostalVal(e.target.value.replace(/[^0-9]/g, ""));
-                }}
-                className="input-field"
-              />
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-display text-lg font-bold">Contact & shipping</h2>
+              {!isEditingProfile && user?.phone && user?.address && (
+                <button
+                  type="button"
+                  onClick={() => setIsEditingProfile(true)}
+                  className="rounded-full border border-border bg-background px-4.5 py-1.5 text-xs font-bold hover:bg-accent transition"
+                >
+                  Edit Profile
+                </button>
+              )}
             </div>
+
+            {!isEditingProfile ? (
+              <div className="space-y-4 text-sm">
+                {/* Hidden fields for form submit when in read-only mode */}
+                <input type="hidden" name="first" value={firstName} />
+                <input type="hidden" name="last" value={lastName} />
+                <input type="hidden" name="email" value={email} />
+                <input type="hidden" name="phone" value={phone} />
+                <input type="hidden" name="address" value={addressVal} />
+                <input type="hidden" name="city" value={cityVal} />
+                <input type="hidden" name="state" value={stateVal} />
+                <input type="hidden" name="postal" value={postalVal} />
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <span className="text-[10px] font-extrabold text-muted-foreground block uppercase tracking-wider">Contact Name</span>
+                    <span className="font-bold text-foreground">{firstName} {lastName}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-extrabold text-muted-foreground block uppercase tracking-wider">Email Address</span>
+                    <span className="font-bold text-foreground">{email}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-extrabold text-muted-foreground block uppercase tracking-wider">Phone Number</span>
+                    <span className="font-bold text-foreground">{phone || "—"}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-extrabold text-muted-foreground block uppercase tracking-wider">Shipping Address</span>
+                    <span className="font-bold text-foreground">
+                      {addressVal ? `${addressVal}, ${cityVal}, ${stateVal} - ${postalVal}` : "—"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <input
+                  name="first"
+                  required
+                  placeholder="First name"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  className="input-field"
+                />
+                <input
+                  name="last"
+                  required
+                  placeholder="Last name"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  className="input-field"
+                />
+                <input
+                  name="email"
+                  required
+                  type="email"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="input-field sm:col-span-2"
+                />
+                <input
+                  name="phone"
+                  required
+                  type="tel"
+                  placeholder="Phone number"
+                  value={phone}
+                  maxLength={10}
+                  onKeyPress={(e) => {
+                    if (!/[0-9]/.test(e.key)) {
+                      e.preventDefault();
+                    }
+                  }}
+                  onChange={(e) => {
+                    setPhone(e.target.value.replace(/[^0-9]/g, "").slice(0, 10));
+                  }}
+                  className="input-field sm:col-span-2"
+                />
+                <input
+                  name="address"
+                  required
+                  placeholder="Address"
+                  value={addressVal}
+                  onChange={(e) => setAddressVal(e.target.value)}
+                  className="input-field sm:col-span-2"
+                />
+                <input
+                  name="city"
+                  required
+                  placeholder="City"
+                  value={cityVal}
+                  onChange={(e) => setCityVal(e.target.value)}
+                  className="input-field"
+                />
+                <select
+                  name="state"
+                  required
+                  value={stateVal}
+                  onChange={(e) => setStateVal(e.target.value)}
+                  className="input-field cursor-pointer bg-card text-foreground"
+                >
+                  <option value="">Select State</option>
+                  {indianStates.map((st) => (
+                    <option key={st} value={st}>
+                      {st}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  name="postal"
+                  required
+                  placeholder="Postal code"
+                  value={postalVal}
+                  onKeyPress={(e) => {
+                    if (!/[0-9]/.test(e.key)) {
+                      e.preventDefault();
+                    }
+                  }}
+                  onChange={(e) => {
+                    setPostalVal(e.target.value.replace(/[^0-9]/g, ""));
+                  }}
+                  className="input-field"
+                />
+
+                <div className="sm:col-span-2 flex justify-end gap-2 pt-2 border-t border-border mt-2">
+                  {user?.phone && user?.address && (
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingProfile(false)}
+                      className="rounded-full border border-border bg-background px-5 py-2 text-xs font-bold hover:bg-accent transition cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!firstName || !lastName || !email || !phone || !addressVal || !cityVal || !stateVal || !postalVal) {
+                        toast.error("Please fill in all the contact & shipping fields.");
+                        return;
+                      }
+                      const addressStr = `${addressVal}, ${cityVal}, ${stateVal}, ${postalVal}, India`;
+                      toast.loading("Saving shipping details...", { id: "save-profile" });
+                      apiClient.users
+                        .updateProfile({
+                          name: `${firstName} ${lastName}`.trim(),
+                          phone,
+                          address: addressStr,
+                        })
+                        .then((updatedUser) => {
+                          if (updatedUser) {
+                            setUser(updatedUser);
+                            toast.success("Shipping details saved successfully!", { id: "save-profile" });
+                            setIsEditingProfile(false);
+                          }
+                        })
+                        .catch((err) => {
+                          toast.error(err?.message || "Failed to save profile", { id: "save-profile" });
+                        });
+                    }}
+                    className="rounded-full bg-primary px-5 py-2 text-xs font-bold text-primary-foreground hover:bg-primary-glow transition cursor-pointer"
+                  >
+                    Save & Continue
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
           <div className="rounded-2xl border border-border bg-card p-6">
             <h2 className="mb-4 font-display text-lg font-bold">Payment Method</h2>
             <div className="grid gap-3 sm:grid-cols-2">
               {[
                 {
-                  id: "netbanking",
-                  label: "Net Banking",
-                  icon: Building2,
-                },
-                {
-                  id: "upi",
-                  label: "UPI Payment",
-                  logo: "https://upload.wikimedia.org/wikipedia/commons/e/e1/UPI-Logo-vector.svg",
-                },
-                {
-                  id: "card",
-                  label: "Credit / Debit Card",
+                  id: "online",
+                  label: "Online Transaction",
                   icon: CreditCard,
                 },
                 {
@@ -493,7 +576,7 @@ function Checkout() {
                   label: "Cash on Delivery",
                   icon: Truck,
                 },
-              ].map((method) => (
+              ].map((method: any) => (
                 <label
                   key={method.id}
                   className={cn(
