@@ -26,6 +26,7 @@ export function AdminShell({ title, subtitle, children }: AdminShellProps) {
 interface Option {
   value: string;
   label: string;
+  className?: string;
 }
 
 interface AdminDropdownProps {
@@ -59,9 +60,15 @@ export function AdminDropdown({ value, onChange, options, placeholder = "Select 
         disabled={disabled}
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-xs font-bold text-foreground hover:border-primary hover:bg-muted/30 transition duration-150 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+        className="flex w-full items-center justify-between gap-2 rounded-xl border border-border bg-card px-3 py-2 text-xs font-bold text-foreground hover:border-primary hover:bg-muted/30 transition duration-150 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
       >
-        <span className="truncate">{selectedOption ? selectedOption.label : placeholder}</span>
+        {selectedOption ? (
+          <span className={cn("truncate px-2 py-0.5 rounded-full border text-[9px] uppercase font-bold text-left", selectedOption.className)}>
+            {selectedOption.label}
+          </span>
+        ) : (
+          <span className="truncate text-stone-400">{placeholder}</span>
+        )}
         <ChevronDown className={cn("h-4 w-4 text-primary transition-transform shrink-0", open && "rotate-180")} />
       </button>
 
@@ -83,14 +90,16 @@ export function AdminDropdown({ value, onChange, options, placeholder = "Select 
                     setOpen(false);
                   }}
                   className={cn(
-                    "flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs font-semibold transition-all duration-150 cursor-pointer select-none",
+                    "flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left text-xs font-semibold transition-all duration-150 cursor-pointer select-none",
                     value === opt.value
-                      ? "bg-primary text-white"
-                      : "text-stone-700 hover:bg-primary/10 hover:text-primary"
+                      ? "bg-[#f46a1e]/10 border border-[#f46a1e]/20"
+                      : "hover:bg-stone-50"
                   )}
                 >
-                  <span className="truncate">{opt.label}</span>
-                  {value === opt.value && <Check className="h-3.5 w-3.5 shrink-0" />}
+                  <span className={cn("truncate px-2.5 py-0.5 rounded-full border text-[9px] uppercase font-bold", opt.className || "bg-stone-100 text-stone-700 border-stone-200")}>
+                    {opt.label}
+                  </span>
+                  {value === opt.value && <Check className="h-3.5 w-3.5 shrink-0 text-[#f46a1e]" />}
                 </button>
               </li>
             ))}

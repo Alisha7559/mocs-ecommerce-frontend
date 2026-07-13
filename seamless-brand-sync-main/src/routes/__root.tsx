@@ -141,24 +141,25 @@ function RootComponent() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isHome = pathname === "/";
   const isAuthPage = pathname === "/auth";
+  const isAdminRoute = pathname.startsWith("/admin");
 
   const renderContent = () => (
     <QueryClientProvider client={queryClient}>
       <StoreProvider>
         <ScrollRestoration />
-        <Navbar />
-        <main className={isHome ? "" : isAuthPage ? "pt-14 sm:pt-16" : "pt-16"}>
+        {!isAdminRoute && <Navbar />}
+        <main className={isAdminRoute ? "" : isHome ? "" : isAuthPage ? "pt-14 sm:pt-16" : "pt-16"}>
           {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
           <Outlet />
         </main>
-        {!isAuthPage && <Footer />}
-        {!isAuthPage && <AnnouncementBar />}
-        <MobileNav />
-        <CartDrawer />
-        <SearchModal />
-        {!isAuthPage && <ScrollTagline />}
+        {!isAuthPage && !isAdminRoute && <Footer />}
+        {!isAuthPage && !isAdminRoute && <AnnouncementBar />}
+        {!isAdminRoute && <MobileNav />}
+        {!isAdminRoute && <CartDrawer />}
+        {!isAdminRoute && <SearchModal />}
+        {!isAuthPage && !isAdminRoute && <ScrollTagline />}
         <Toaster position="top-right" richColors closeButton duration={3000} visibleToasts={1} />
-        {!isAuthPage && <div className="h-14 lg:hidden" />}
+        {!isAuthPage && !isAdminRoute && <div className="h-14 lg:hidden" />}
       </StoreProvider>
     </QueryClientProvider>
   );

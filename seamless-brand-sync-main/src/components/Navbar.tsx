@@ -236,15 +236,6 @@ export function Navbar() {
                         >
                           Wishlist
                         </Link>
-                        {(user.role === "admin" || user.role === "superadmin") && (
-                          <Link
-                            to="/admin/dashboard"
-                            onClick={() => setUserOpen(false)}
-                            className="block rounded-lg px-3 py-2 text-sm font-semibold hover:bg-accent focus:outline-none outline-none select-none text-primary"
-                          >
-                            Admin Dashboard
-                          </Link>
-                        )}
                         <button
                           onClick={() => {
                             logout();

@@ -1,5 +1,6 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import {
   ShieldOff,
   ShieldCheck,
@@ -16,9 +17,11 @@ import {
   User as UserIcon,
   BarChart,
   Settings,
+  Bell,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
+import { apiClient } from "@/lib/api";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -35,8 +38,72 @@ function AdminLayout() {
   const location = useRouterState({ select: (s) => s.location });
   const { user, logout } = useStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [newOrderModal, setNewOrderModal] = useState<any>(null);
+  const latestOrderIdRef = useRef<string | null>(null);
 
   const isAdmin = user && (user.role === "admin" || user.role === "superadmin");
+
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    const initializeLatestOrder = async () => {
+      try {
+        const orders = await apiClient.orders.listAll("limit=1");
+        if (orders && orders.length > 0) {
+          const newest = orders[0];
+          latestOrderIdRef.current = newest._id;
+
+          let alreadyViewed = false;
+          try {
+            const stored = localStorage.getItem("mocs_viewed_orders");
+            const viewedList = stored ? JSON.parse(stored) : [];
+            alreadyViewed = viewedList.includes(newest._id);
+          } catch (e) {
+            console.error(e);
+          }
+
+          const isPlaced = (newest.orderStatus || newest.status || "").toLowerCase() === "placed";
+
+          if (!alreadyViewed && isPlaced) {
+            setNewOrderModal(newest);
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to initialize latest order", err);
+      }
+    };
+    initializeLatestOrder();
+
+    const interval = setInterval(async () => {
+      try {
+        const orders = await apiClient.orders.listAll("limit=1");
+        if (orders && orders.length > 0) {
+          const newest = orders[0];
+          const prevId = latestOrderIdRef.current;
+
+          let alreadyViewed = false;
+          try {
+            const stored = localStorage.getItem("mocs_viewed_orders");
+            const viewedList = stored ? JSON.parse(stored) : [];
+            alreadyViewed = viewedList.includes(newest._id);
+          } catch (e) {
+            console.error(e);
+          }
+
+          const isPlaced = (newest.orderStatus || newest.status || "").toLowerCase() === "placed";
+
+          if (prevId && prevId !== newest._id && !alreadyViewed && isPlaced) {
+            setNewOrderModal(newest);
+          }
+          latestOrderIdRef.current = newest._id;
+        }
+      } catch (err) {
+        console.warn("Error polling for new orders", err);
+      }
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [isAdmin]);
 
   useEffect(() => {
     if (isAdmin && (location.pathname === "/admin" || location.pathname === "/admin/")) {
@@ -148,12 +215,6 @@ function AdminLayout() {
         >
           My Profile
         </Link>
-        <Link
-          to="/"
-          className="flex w-full items-center rounded-xl border border-transparent px-3 py-2 text-sm font-semibold text-zinc-300 hover:border-[#f46a1e] hover:bg-white/5 hover:text-white transition-all"
-        >
-          Storefront
-        </Link>
         <button
           onClick={() => {
             logout();
@@ -228,6 +289,68 @@ function AdminLayout() {
           </div>
         </footer>
       </main>
+
+      {/* New Order Amodal Alert Box */}
+      <AnimatePresence>
+        {newOrderModal && (
+          <motion.div
+            initial={{ y: 50, scale: 0.9, opacity: 0 }}
+            animate={{ y: 0, scale: 1, opacity: 1 }}
+            exit={{ y: 50, scale: 0.9, opacity: 0 }}
+            transition={{ type: "spring", damping: 25, stiffness: 250 }}
+            className="fixed bottom-6 right-6 z-[100] w-full max-w-sm rounded-3xl border border-[#f46a1e]/50 bg-zinc-950 p-5 shadow-2xl shadow-[#f46a1e]/20 text-zinc-100 text-left overflow-hidden pointer-events-auto ring-4 ring-[#f46a1e]/40 animate-pulse"
+          >
+            {/* Top orange glow effect */}
+            <div className="absolute -top-12 -right-12 h-32 w-32 rounded-full bg-primary/20 blur-2xl pointer-events-none" />
+
+            <div className="flex items-start gap-4">
+              <span className="grid h-10 w-10 place-items-center rounded-xl bg-red-500/10 text-red-500 border border-red-500/25 shrink-0 animate-bounce">
+                <Bell className="h-5 w-5" />
+              </span>
+              <div className="space-y-1 flex-1">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                    </span>
+                    <h4 className="font-display text-sm font-black uppercase tracking-wide text-white">
+                      New Order!
+                    </h4>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setNewOrderModal(null)}
+                    className="text-zinc-500 hover:text-white p-0.5 rounded-full transition"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                <p className="text-[11px] text-zinc-400 font-mono mt-1 text-zinc-300">
+                  ID: #{newOrderModal._id}
+                </p>
+                <div className="text-[11px] text-zinc-400 space-y-0.5 mt-1.5">
+                  <p>Customer: <span className="text-white font-semibold">{newOrderModal.user?.name || "Customer"}</span></p>
+                  <p>Amount: <span className="text-primary font-bold">₹{newOrderModal.totalAmount || newOrderModal.total}</span></p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 flex justify-end gap-2.5 border-t border-zinc-900 pt-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setNewOrderModal(null);
+                  navigate({ to: "/admin/orders", search: { openOrderId: newOrderModal._id } });
+                }}
+                className="w-full rounded-xl bg-primary py-2 text-center text-xs font-bold uppercase text-white hover:bg-primary-glow hover:scale-102 active:scale-[0.98] transition cursor-pointer shadow-md shadow-orange-500/10"
+              >
+                View Details
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

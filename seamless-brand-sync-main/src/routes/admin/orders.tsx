@@ -25,26 +25,38 @@ const isItemRefundedOrReturned = (item: any, order: any) => {
 const getOrderStatusStyle = (status: string) => {
   const s = status || "Placed";
   switch (s) {
-    case "Delivered":
-    case "delivered":
-      return "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20";
-    case "Cancelled":
-    case "cancelled":
-      return "bg-red-500/10 text-red-600 border border-red-500/20";
-    case "Return Requested":
-    case "return_requested":
-      return "bg-purple-500/10 text-purple-600 border border-purple-500/20";
-    case "Returned":
-    case "returned":
-      return "bg-stone-500/10 text-stone-600 border border-stone-500/20";
+    case "Placed":
+    case "placed":
+      return "bg-zinc-100 text-zinc-700 border border-zinc-300/60";
+    case "Confirmed":
+    case "confirmed":
+      return "bg-blue-100 text-blue-800 border border-blue-300/60";
+    case "Processing":
+    case "processing":
+      return "bg-amber-100 text-amber-800 border border-amber-300/60";
     case "Shipped":
     case "shipped":
-      return "bg-indigo-500/10 text-indigo-650 border border-indigo-650/20";
+      return "bg-indigo-100 text-indigo-800 border border-indigo-300/60";
     case "Out for Delivery":
     case "out_for_delivery":
-      return "bg-pink-500/10 text-pink-650 border border-pink-650/20";
+      return "bg-purple-100 text-purple-800 border border-purple-300/60";
+    case "Delivered":
+    case "delivered":
+      return "bg-emerald-100 text-emerald-800 border border-emerald-300/60";
+    case "Cancelled":
+    case "cancelled":
+      return "bg-red-100 text-red-800 border border-red-300/60";
+    case "Return Requested":
+    case "return_requested":
+      return "bg-orange-100 text-orange-850 border border-orange-300/60";
+    case "Return Accepted":
+    case "return_accepted":
+      return "bg-fuchsia-100 text-fuchsia-800 border border-fuchsia-300/60";
+    case "Returned":
+    case "returned":
+      return "bg-stone-100 text-stone-700 border border-stone-300/60";
     default:
-      return "bg-amber-500/10 text-amber-600 border border-amber-500/20";
+      return "bg-stone-100 text-stone-700 border border-stone-300/60";
   }
 };
 
@@ -82,6 +94,31 @@ function AdminOrders() {
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+
+  const [viewedOrderIds, setViewedOrderIds] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem("mocs_viewed_orders");
+      if (stored) {
+        return new Set(JSON.parse(stored));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return new Set<string>();
+  });
+
+  const markAsViewed = (orderId: string) => {
+    setViewedOrderIds((prev) => {
+      const updated = new Set(prev);
+      updated.add(orderId);
+      try {
+        localStorage.setItem("mocs_viewed_orders", JSON.stringify(Array.from(updated)));
+      } catch (e) {
+        console.error(e);
+      }
+      return updated;
+    });
+  };
 
   useEffect(() => {
     setPage(1);
@@ -130,6 +167,20 @@ function AdminOrders() {
     fetchOrders();
   }, [statusFilter, payFilter, methodFilter, showDeleted]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const openOrderId = params.get("openOrderId");
+    if (openOrderId && orders.length > 0) {
+      const orderToOpen = orders.find((o) => o._id === openOrderId);
+      if (orderToOpen) {
+        openDetailModal(orderToOpen);
+        // Clear query param so it doesn't reopen on page refresh
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, newUrl);
+      }
+    }
+  }, [orders]);
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     fetchOrders();
@@ -138,6 +189,7 @@ function AdminOrders() {
   const openDetailModal = (order: any) => {
     setSelectedOrder(order);
     setDetailModalOpen(true);
+    markAsViewed(order._id);
   };
 
   const handleUpdateStatus = async (orderId: string, newStatus: string, note?: string) => {
@@ -302,9 +354,16 @@ function AdminOrders() {
                 {paginatedOrders.map((o) => (
                   <tr key={o._id} className={o.isDeleted ? "opacity-60 bg-muted/10" : "hover:bg-muted/10 transition"}>
                     <td className="p-4">
-                      <p className="font-semibold text-foreground">
-                        {o.razorpayOrderId ? o.razorpayOrderId.slice(-8).toUpperCase() : o._id.slice(-8).toUpperCase()}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-foreground">
+                          {o.razorpayOrderId ? o.razorpayOrderId.slice(-8).toUpperCase() : o._id.slice(-8).toUpperCase()}
+                        </p>
+                        {(o.orderStatus === "Placed" || o.status === "placed") && (
+                          <span className="inline-flex items-center rounded-md bg-emerald-500 px-1.5 py-0.5 text-[9px] font-black uppercase text-white animate-pulse">
+                            New
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[10px] text-muted-foreground">{formatDate(o.createdAt)}</p>
                     </td>
                     <td className="p-4">
@@ -605,12 +664,22 @@ function AdminOrders() {
                                 </div>
                               ) : (
                                 <AdminDropdown
-                                  value={selectedOrder.orderStatus || selectedOrder.status}
-                                  onChange={(val) => handleUpdateStatus(selectedOrder._id, val)}
-                                  disabled={updatingStatus}
-                                  className="w-full text-stone-700 font-bold"
-                                  options={["Placed", "Confirmed", "Processing", "Shipped", "Out for Delivery", "Delivered", "Cancelled", "Return Accepted", "Returned"].map((s) => ({ value: s, label: s }))}
-                                />
+                                   value={selectedOrder.orderStatus || selectedOrder.status}
+                                   onChange={(val) => handleUpdateStatus(selectedOrder._id, val)}
+                                   disabled={updatingStatus}
+                                   className="w-full text-stone-700 font-bold"
+                                   options={(() => {
+                                     const baseOpts = ["Placed", "Confirmed", "Processing", "Shipped", "Out for Delivery", "Delivered", "Cancelled"];
+                                     if (["Return Requested", "Return Accepted", "Returned"].includes(selectedOrder.orderStatus)) {
+                                       baseOpts.push(selectedOrder.orderStatus);
+                                     }
+                                     return baseOpts.map((s) => ({
+                                       value: s,
+                                       label: s,
+                                       className: getOrderStatusStyle(s)
+                                     }));
+                                   })()}
+                                 />
                               )}
                             </div>
                             <div className="space-y-1">
@@ -642,14 +711,25 @@ function AdminOrders() {
                                     onChange={(val) => handleUpdatePaymentStatus(selectedOrder._id, val)}
                                     disabled={updatingStatus}
                                     className="w-full text-stone-700 font-bold"
-                                    options={["Pending", "Paid", "Failed", "Refunded"].map((s) => ({ value: s, label: s }))}
+                                    options={(() => {
+                                      const opts = ["Pending", "Paid", "Failed"];
+                                      if (selectedOrder.orderStatus === "Returned") {
+                                        opts.push("Refunded");
+                                      }
+                                      return opts.map((s) => {
+                                        let badgeClass = "bg-stone-50 text-stone-600 border border-stone-200/50";
+                                        if (s === "Paid") badgeClass = "bg-emerald-50 text-emerald-700 border border-emerald-200/50";
+                                        if (s === "Failed") badgeClass = "bg-rose-50 text-rose-700 border border-rose-200/50";
+                                        if (s === "Refunded") badgeClass = "bg-purple-50 text-purple-750 border border-purple-200/50";
+                                        return { value: s, label: s, className: badgeClass };
+                                      });
+                                    })()}
                                   />
                                 );
                               })()}
                             </div>
                           </div>
                         )}
-
                         {/* Status History Timeline */}
                         {selectedOrder.statusHistory && selectedOrder.statusHistory.length > 0 && (
                           <div className="border-t border-stone-100 pt-4">

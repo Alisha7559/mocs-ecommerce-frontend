@@ -82,7 +82,7 @@ function Wishlist() {
             to="/shop"
             className="rounded-full bg-primary px-7 py-3 text-sm font-bold uppercase tracking-wide text-primary-foreground transition hover:bg-primary-glow"
           >
-            Discover sneakers
+            Discover footwear
           </Link>
         </div>
       ) : (

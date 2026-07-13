@@ -59,13 +59,13 @@ export function CartDrawer() {
                 <div className="flex h-full flex-col items-center justify-center gap-4 text-center text-muted-foreground">
                   <ShoppingBag className="h-12 w-12" />
                   <p>Your cart is empty</p>
-                  <button
-                    type="button"
+                  <Link
+                    to="/shop"
                     onClick={() => setCartOpen(false)}
                     className="rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary-glow"
                   >
                     Start shopping
-                  </button>
+                  </Link>
                 </div>
               ) : (
                 <ul className="space-y-4">
