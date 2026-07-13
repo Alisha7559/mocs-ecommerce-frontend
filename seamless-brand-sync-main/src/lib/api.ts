@@ -63,6 +63,11 @@ export const apiClient = {
         body: JSON.stringify(data),
       }),
     list: (q = "") => api<any>(`/api/users${q ? `?${q}` : ""}`),
+    create: (data: any) =>
+      api("/api/users", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
     update: (id: string, data: any) =>
       api(`/api/users/${id}`, {
         method: "PUT",

@@ -177,17 +177,6 @@ function AdminLayout() {
         )}
       </div>
 
-      {/* User Status Bar */}
-      <div className="flex items-center gap-3 border-b border-zinc-800/80 px-6 py-3.5 bg-black/10 shrink-0">
-        <span className="grid h-9 w-9 place-items-center rounded-full bg-primary/20 text-primary font-display text-xs font-bold uppercase border border-primary/45">
-          {user.name.charAt(0)}
-        </span>
-        <div className="min-w-0 flex-1 text-left">
-          <p className="truncate text-sm font-bold text-white leading-none mb-1">{user.name}</p>
-          <p className="truncate text-[9px] text-zinc-400 font-bold uppercase tracking-wider">{user.jobTitle || user.role}</p>
-        </div>
-      </div>
-
       {/* Navigation Items */}
       <nav className="flex-1 space-y-1.5 px-3 py-4 overflow-y-auto no-scrollbar">
         {navLinks.map((link) => {
@@ -271,7 +260,22 @@ function AdminLayout() {
       </aside>
 
       {/* Content Panel Area */}
-      <main className="min-w-0 flex-1 flex flex-col justify-between px-4 py-8 sm:px-6 lg:px-8">
+      <main className="min-w-0 flex-1 flex flex-col justify-between px-4 py-6 sm:px-6 lg:px-8">
+        <div className="flex justify-end items-center mb-6">
+          <Link
+            to="/admin/profile"
+            className="flex items-center gap-3 bg-transparent hover:bg-muted/30 px-3 py-1.5 rounded-2xl transition cursor-pointer select-none"
+          >
+            <span className="grid h-7 w-7 place-items-center rounded-full bg-primary/10 text-primary font-display text-xs font-bold uppercase border border-primary/20 shrink-0">
+              {user.name.charAt(0)}
+            </span>
+            <div className="min-w-0 text-left">
+              <p className="truncate text-xs font-bold text-foreground leading-none mb-0.5">{user.name}</p>
+              <p className="truncate text-[9px] text-stone-400 font-bold uppercase tracking-wider">{user.jobTitle || user.role}</p>
+            </div>
+          </Link>
+        </div>
+
         <div className="flex-1">
           <Outlet />
         </div>

@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Users, Search, Edit3, Trash2, RotateCcw, X, AlertTriangle } from "lucide-react";
+import { Users, Search, Edit3, Trash2, RotateCcw, X, AlertTriangle, Eye, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api";
 import { AdminDropdown } from "@/components/admin/AdminShell";
 import { formatDate } from "@/lib/utils";
+import { useStore } from "@/lib/store";
 
 export const Route = createFileRoute("/admin/users")({
   head: () => ({
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/admin/users")({
 });
 
 function AdminUsers() {
+  const { user } = useStore();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -34,6 +36,15 @@ function AdminUsers() {
   const [editPhone, setEditPhone] = useState("");
   const [editAddress, setEditAddress] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Add modal state
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [addName, setAddName] = useState("");
+  const [addEmail, setAddEmail] = useState("");
+  const [addPassword, setAddPassword] = useState("");
+  const [addRole, setAddRole] = useState("admin");
+  const [addPhone, setAddPhone] = useState("");
+  const [addAddress, setAddAddress] = useState("");
 
   // Delete confirmation modal state
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -98,6 +109,34 @@ function AdminUsers() {
     }
   };
 
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await apiClient.users.create({
+        name: addName,
+        email: addEmail,
+        password: addPassword,
+        role: addRole,
+        phone: addPhone,
+        address: addAddress,
+      });
+      toast.success("User created successfully");
+      setAddModalOpen(false);
+      setAddName("");
+      setAddEmail("");
+      setAddPassword("");
+      setAddRole("admin");
+      setAddPhone("");
+      setAddAddress("");
+      fetchUsers();
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to create user");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const triggerSoftDelete = (user: any) => {
     setUserToDelete(user);
     setDeleteConfirmOpen(true);
@@ -135,6 +174,14 @@ function AdminUsers() {
           </h1>
           <p className="text-muted-foreground text-sm">Review, edit, and deactivate user accounts.</p>
         </div>
+        {user?.role === "superadmin" && (
+          <button
+            onClick={() => setAddModalOpen(true)}
+            className="rounded-full bg-primary px-5 py-2.5 text-sm font-bold uppercase tracking-wider text-primary-foreground hover:bg-primary-glow flex items-center gap-2 shadow-md shadow-orange-500/15 cursor-pointer"
+          >
+            <UserPlus className="h-4 w-4" /> Add
+          </button>
+        )}
       </div>
 
       {/* Filter and Search Bar */}
@@ -248,14 +295,24 @@ function AdminUsers() {
                     </td>
                     <td className="p-4 text-right">
                       <div className="flex gap-1.5 justify-end">
-                        <button
-                          onClick={() => openEditModal(u)}
-                          disabled={u.role === "superadmin" && u._id !== editingUser?._id}
-                          className="rounded-xl border border-border p-2 text-muted-foreground transition hover:border-primary hover:text-primary"
-                          title="Edit User"
-                        >
-                          <Edit3 className="h-4 w-4" />
-                        </button>
+                        {u.role === "user" ? (
+                          <button
+                            onClick={() => openEditModal(u)}
+                            className="rounded-xl border border-border p-2 text-muted-foreground transition hover:border-primary hover:text-primary"
+                            title="View Customer Details"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => openEditModal(u)}
+                            disabled={u.role === "superadmin" && u._id !== editingUser?._id}
+                            className="rounded-xl border border-border p-2 text-muted-foreground transition hover:border-primary hover:text-primary"
+                            title="Edit User"
+                          >
+                            <Edit3 className="h-4 w-4" />
+                          </button>
+                        )}
                         {u.isDeleted ? (
                           <button
                             onClick={() => handleRestoreUser(u)}
@@ -314,28 +371,120 @@ function AdminUsers() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-secondary/60 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-card animate-in fade-in zoom-in-95 duration-200">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="font-display text-xl font-bold">Edit Account Details</h3>
+              <h3 className="font-display text-xl font-bold">
+                {editingUser?.role === "user" ? "Customer Details" : "Edit Account Details"}
+              </h3>
               <button onClick={() => setEditModalOpen(false)} className="rounded-full p-1.5 hover:bg-accent">
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <form onSubmit={handleUpdateUser} className="space-y-4">
+            
+            {editingUser?.role === "user" ? (
+              <div className="space-y-4 text-left">
+                <div className="border-b border-stone-100 pb-3">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Full Name</p>
+                  <p className="text-sm font-semibold text-stone-850 mt-0.5">{editName}</p>
+                </div>
+                <div className="border-b border-stone-100 pb-3">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Email Address</p>
+                  <p className="text-sm font-semibold text-stone-850 mt-0.5">{editEmail}</p>
+                </div>
+                <div className="border-b border-stone-100 pb-3">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Account Role</p>
+                  <span className="inline-block rounded-full bg-blue-500/10 text-blue-600 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider mt-1">
+                    Customer
+                  </span>
+                </div>
+                <div className="border-b border-stone-100 pb-3">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Phone Number</p>
+                  <p className="text-sm font-semibold text-stone-850 mt-0.5">{editPhone || "—"}</p>
+                </div>
+                <div className="pb-1">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Delivery Address</p>
+                  <p className="text-sm font-semibold text-stone-850 mt-0.5 whitespace-pre-wrap">{editAddress || "—"}</p>
+                </div>
+                         <button
+                  type="button"
+                  onClick={() => setEditModalOpen(false)}
+                  className="w-full rounded-full bg-primary py-3 text-sm font-bold uppercase tracking-wider text-primary-foreground transition hover:bg-primary-glow cursor-pointer shadow-md shadow-orange-500/10"
+                >
+                  Close View
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleUpdateUser} className="space-y-4">
+                <div>
+                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Full Name</label>
+                  <input required value={editName} onChange={(e) => setEditName(e.target.value)} className="input-field disabled:opacity-60 disabled:bg-stone-50" disabled={editingUser?.role === "user"} />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Email Address</label>
+                  <input required type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} className="input-field disabled:opacity-60 disabled:bg-stone-50" disabled={editingUser?.role === "user"} />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Account Role</label>
+                  <AdminDropdown
+                    value={editRole}
+                    onChange={setEditRole}
+                    className="w-full"
+                    options={[
+                      { value: "user", label: "User" },
+                      { value: "admin", label: "Admin" },
+                      { value: "superadmin", label: "Super Admin" },
+                    ]}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Phone Number</label>
+                  <input value={editPhone} onChange={(e) => setEditPhone(e.target.value)} className="input-field disabled:opacity-60 disabled:bg-stone-50" disabled={editingUser?.role === "user"} />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Delivery Address</label>
+                  <textarea rows={2} value={editAddress} onChange={(e) => setEditAddress(e.target.value)} className="input-field resize-none disabled:opacity-60 disabled:bg-stone-50" disabled={editingUser?.role === "user"} />
+                </div>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="w-full rounded-full bg-primary py-3 text-sm font-bold uppercase tracking-wider text-primary-foreground transition hover:bg-primary-glow disabled:opacity-60"
+                >
+                  {saving ? "Saving..." : "Save Changes"}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Add User Modal */}
+      {addModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-secondary/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-card animate-in fade-in zoom-in-95 duration-200">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="font-display text-xl font-bold">Add Sub Admin Account</h3>
+              <button onClick={() => setAddModalOpen(false)} className="rounded-full p-1.5 hover:bg-accent cursor-pointer">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <form onSubmit={handleCreateUser} className="space-y-4" autoComplete="off">
               <div>
                 <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Full Name</label>
-                <input required value={editName} onChange={(e) => setEditName(e.target.value)} className="input-field" />
+                <input required value={addName} onChange={(e) => setAddName(e.target.value)} className="input-field" placeholder="John Doe" />
               </div>
               <div>
                 <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Email Address</label>
-                <input required type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} className="input-field" />
+                <input required type="email" value={addEmail} onChange={(e) => setAddEmail(e.target.value)} className="input-field" placeholder="john@example.com" autoComplete="new-email" />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Password</label>
+                <input required type="password" value={addPassword} onChange={(e) => setAddPassword(e.target.value)} className="input-field" placeholder="••••••••" minLength={8} autoComplete="new-password" />
               </div>
               <div>
                 <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Account Role</label>
                 <AdminDropdown
-                  value={editRole}
-                  onChange={setEditRole}
+                  value={addRole}
+                  onChange={setAddRole}
                   className="w-full"
                   options={[
-                    { value: "user", label: "User" },
                     { value: "admin", label: "Admin" },
                     { value: "superadmin", label: "Super Admin" },
                   ]}
@@ -343,18 +492,18 @@ function AdminUsers() {
               </div>
               <div>
                 <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Phone Number</label>
-                <input value={editPhone} onChange={(e) => setEditPhone(e.target.value)} className="input-field" />
+                <input value={addPhone} onChange={(e) => setAddPhone(e.target.value)} className="input-field" placeholder="10-digit number" />
               </div>
               <div>
                 <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-muted-foreground">Delivery Address</label>
-                <textarea rows={2} value={editAddress} onChange={(e) => setEditAddress(e.target.value)} className="input-field resize-none" />
+                <textarea rows={2} value={addAddress} onChange={(e) => setAddAddress(e.target.value)} className="input-field resize-none" placeholder="Enter address..." />
               </div>
               <button
                 type="submit"
                 disabled={saving}
-                className="w-full rounded-full bg-primary py-3 text-sm font-bold uppercase tracking-wider text-primary-foreground transition hover:bg-primary-glow disabled:opacity-60"
+                className="w-full rounded-full bg-primary py-3 text-sm font-bold uppercase tracking-wider text-primary-foreground transition hover:bg-primary-glow disabled:opacity-60 cursor-pointer shadow-md shadow-orange-500/10"
               >
-                {saving ? "Saving..." : "Save Changes"}
+                {saving ? "Creating..." : "Create Account"}
               </button>
             </form>
           </div>
