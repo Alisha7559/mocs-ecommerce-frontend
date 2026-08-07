@@ -42,7 +42,7 @@ function AdminQueries() {
       setTotalItems(res.total);
     } catch (err: any) {
       console.error(err);
-      toast.error("Failed to load customer queries");
+      toast.error("Failed to load customer queries", { id: "load-queries-error" });
     } finally {
       setLoading(false);
     }

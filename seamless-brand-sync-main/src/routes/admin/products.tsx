@@ -164,7 +164,7 @@ function AdminProducts() {
       setTotalItems(res.total);
     } catch (err: any) {
       console.error(err);
-      toast.error("Failed to load products list");
+      toast.error("Failed to load products list", { id: "load-products-error" });
     } finally {
       setLoading(false);
     }

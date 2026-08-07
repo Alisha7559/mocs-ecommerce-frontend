@@ -335,7 +335,7 @@ function AdminSettingsPage() {
           setOriginalAdvertisements([]);
         }
       } catch (err: any) {
-        toast.error("Failed to load settings from server");
+        toast.error("Failed to load settings from server", { id: "load-settings-error" });
       } finally {
         setLoading(false);
       }

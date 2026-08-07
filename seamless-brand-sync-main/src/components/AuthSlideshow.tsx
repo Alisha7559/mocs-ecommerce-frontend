@@ -72,27 +72,9 @@ export function AuthSlideshow({ authSlides }: AuthSlideshowProps) {
             );
           })()}
 
-          {/* Title & Description overlay on Desktop/Tablet viewports */}
-          <div className="absolute bottom-6 left-6 right-6 z-10 hidden md:block bg-stone-950/80 backdrop-blur-md border border-white/10 rounded-2xl p-5 shadow-lg">
-            <motion.h2
-              initial={{ y: 15, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.15, duration: 0.4 }}
-              className="font-display text-xl font-black text-white leading-tight"
-            >
-              {authSlides[activeSlide]?.title}
-            </motion.h2>
-            <motion.p
-              initial={{ y: 15, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.25, duration: 0.4 }}
-              className="mt-1.5 text-xs leading-relaxed text-zinc-300"
-            >
-              {authSlides[activeSlide]?.subtitle}
-            </motion.p>
-
-            {/* Slideshow dot indicators */}
-            <div className="mt-4 flex gap-1.5">
+          {/* Slideshow dot indicators overlay */}
+          <div className="absolute bottom-6 left-6 z-10 hidden md:block bg-stone-950/80 backdrop-blur-md border border-white/10 rounded-full px-3 py-2.5 shadow-lg">
+            <div className="flex gap-1.5">
               {authSlides.map((_, idx) => (
                 <span
                   key={idx}

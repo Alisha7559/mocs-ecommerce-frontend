@@ -157,7 +157,7 @@ function AdminOrders() {
       setOrders(filtered);
     } catch (err: any) {
       console.error(err);
-      toast.error("Failed to load orders");
+      toast.error("Failed to load orders", { id: "load-orders-error" });
     } finally {
       setLoading(false);
     }

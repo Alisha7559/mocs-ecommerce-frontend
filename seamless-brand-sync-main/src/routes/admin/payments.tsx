@@ -43,7 +43,7 @@ function AdminPayments() {
       setTotalItems(res.total);
     } catch (err: any) {
       console.error(err);
-      toast.error("Failed to load payments history");
+      toast.error("Failed to load payments history", { id: "load-payments-error" });
     } finally {
       setLoading(false);
     }

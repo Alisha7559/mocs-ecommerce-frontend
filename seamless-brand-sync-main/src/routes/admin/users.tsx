@@ -60,7 +60,7 @@ function AdminUsers() {
       setTotalItems(res.total);
     } catch (err: any) {
       console.error(err);
-      toast.error("Failed to load user list");
+      toast.error("Failed to load user list", { id: "load-users-error" });
     } finally {
       setLoading(false);
     }
